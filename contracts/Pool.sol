@@ -1,41 +1,52 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.7.3;
-pragma experimental ABIEncoderV2;
+
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "./lib/Groth16.sol";
-import "./lib/Types.sol";
+import "./Parameters.sol";
 
+
+interface ITransferVerifier {
+    function verifyProof(
+        uint256[5] memory input,
+        uint256[8] memory p
+    ) external view returns (bool);
+}
+
+interface ITreeVerifier {
+    function verifyProof(
+        uint256[3] memory input,
+        uint256[8] memory p
+    ) external view returns (bool);
+}
 
 interface IOperatorManager {
     function operator() external view returns(address);
-}
-
-interface IParameters {
-    function vk_tx() external view returns(Groth16.VerifyingKey memory);
-    function vk_tree_update() external view returns(Groth16.VerifyingKey memory);    
 }
 
 interface IMintable {
     function mint(address,uint256) external returns(bool);
 }
 
-contract Pool {
+contract Pool is Parameters {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
-    using TransferPub for byte[152];
-    using WithdrawData for byte[60];
-    using TransferData for byte[4];
 
-    IParameters immutable public params;
     IERC20 immutable public token;
     IMintable immutable public voucher_token;
 
 
 
     uint256 immutable public denominator;
+    uint256 immutable public energy_denominator;
+    uint256 immutable public native_denominator;
+
+    ITransferVerifier immutable public transfer_verifier;
+    ITreeVerifier immutable public tree_verifier;
+
+    
     IOperatorManager immutable public operatorManager;
 
     modifier onlyOperator() {
@@ -45,146 +56,76 @@ contract Pool {
 
     mapping (uint256 => bool) public nullifiers;
     mapping (uint256 => uint256) public roots;
-    uint256 public txnumber;
+    uint256 public transfer_num;
 
-    constructor(IParameters _params, IERC20 _token, IMintable _voucher_token, uint256 _denominator, IOperatorManager _operatorManager) {
-        params=_params;
+    constructor(IERC20 _token, IMintable _voucher_token, uint256 _denominator, uint256 _energy_denominator, uint256 _native_denominator, 
+        ITransferVerifier _transfer_verifier, ITreeVerifier _tree_verifier, IOperatorManager _operatorManager, uint256 first_root) {
         token=_token;
         voucher_token=_voucher_token;
         denominator=_denominator;
+        energy_denominator=_energy_denominator;
+        native_denominator=_native_denominator;
+        transfer_verifier=_transfer_verifier;
+        tree_verifier=_tree_verifier;
         operatorManager=_operatorManager;
+        roots[0] = first_root;
     }
-
-    struct Signature {
-        uint8 v;
-        bytes32 r; 
-        bytes32 s;
-    }
-
 
     event Message(bytes message);
 
 
 
-    function _verifyRoot(uint256 oldRoot, uint256 newRoot, uint256 leafIndex, uint256 leaf, Groth16.Proof memory proof) internal view returns(bool) {
-        uint256[] memory inputs = new uint[](4);
-        inputs[0] = oldRoot;
-        inputs[1] = newRoot;
-        inputs[2] = leafIndex;
-        inputs[3] = leaf;
-        return Groth16.verify(inputs, proof, params.vk_tree_update());
-    }
+    function transact() external payable returns(bool) {
+        // Transfer part
+        require(transfer_verifier.verifyProof(transfer_pub(roots[transfer_index()]), transfer_proof()), "bad transfer proof"); 
+        require(!nullifiers[transfer_nullifier()],"doublespend detected");
+        uint256 _transfer_num = transfer_num;
+        require(transfer_index() <= _transfer_num, "transfer index out of bounds");
 
-    function _updateRoot(uint256 newRoot, uint256 leaf, Groth16.Proof memory proof) internal {
-        uint256 leafIndex = txnumber;
-        uint256 oldRoot = roots[leafIndex-1];
-        require(_verifyRoot(oldRoot, newRoot, leafIndex, leaf, proof), "bad tree update proof");
-        roots[leafIndex] = newRoot;
-        txnumber = leafIndex+1;
-    }
+        uint256 fee = memo_fee();
+        int256 token_amount = transfer_token_amount() + int256(fee);
+        int256 energy_amount = transfer_energy_amount();
 
-    function deposit(
-        byte[152] memory pub, byte[4] memory data, bytes memory message, Signature memory sign, uint256 newRoot,
-        Groth16.Proof memory txProof, Groth16.Proof memory treeProof
-    ) onlyOperator external returns(bool) {
-        require(roots[pub.txnumber()]==pub.root(), "wrong root");
-        require(!nullifiers[pub.nullifier()], "existed nullifier");
-        require(pub.energy_delta()==0, "voucher token deposits or withdrawals disabled");
+        if (tx_type()==0) { // Deposit
+            require(token_amount>=0 && energy_amount==0 && msg.value == 0, "incorrect deposit amounts");
+            token.safeTransferFrom(deposit_spender(), address(this), uint256(token_amount).mul(denominator));
+        } else if (tx_type()==1) { // Transfer 
+            require(token_amount==0 && energy_amount==0 && msg.value == 0, "incorrect transfer amounts");
 
-        int64 amount = pub.token_delta() + data.fee();
-        require (amount >= pub.token_delta() && data.fee()>=0 && amount >= 0, "bad token_delta or fee");
-        
+        } else if (tx_type()==2) { // Withdraw
+            require(token_amount<=0 && energy_amount<=0 && msg.value == memo_native_amount().mul(native_denominator), "incorrect transfer amounts");
 
-        bytes32 h = keccak256(abi.encodePacked(pub, data, message));
-        uint256 h_reduced = Groth16.reduce(uint256(h));
-        require(pub.memo() == h_reduced, "bad memo");
+            if (token_amount<0) {
+                token.safeTransfer(memo_receiver(), uint256(-token_amount).mul(denominator));
+            }
 
-        address spender = ecrecover(h, sign.v, sign.r, sign.s);
-        require(Groth16.verify(pub.toInputs(), txProof, params.vk_tx()), "bad tx proof");
-        
-        nullifiers[pub.nullifier()] = true;
-        _updateRoot(newRoot, pub.out_commit(), treeProof);
-        
-        token.safeTransferFrom(spender, address(this), uint256(amount).mul(denominator));
+            if (energy_amount<0) {
+                require(address(voucher_token)!=address(0), "no voucher token");
+                voucher_token.mint(memo_receiver(), uint256(-energy_amount).mul(energy_denominator));
+            }
 
-        if (data.fee()>0) {
-            token.safeTransfer(operatorManager.operator(), uint256(data.fee()).mul(denominator));
+            if (msg.value > 0) {
+                payable(memo_receiver()).transfer(msg.value);
+            }
+
+        } else revert("Incorrect transaction type");
+
+        if (fee>0) {
+            token.safeTransfer(operatorManager.operator(), fee.mul(denominator));
         }
-        emit Message(message);
+
+        nullifiers[transfer_nullifier()] = true;
+
+
+        // Tree part
+        require(tree_verifier.verifyProof(tree_pub(roots[_transfer_num]), tree_proof()), "bad tree proof");
+        roots[_transfer_num+1] = tree_root_after();
+        transfer_num = _transfer_num+1;
+    
+        emit Message(memo_message());
         return true;
     }
-
-    function transfer(
-        byte[152] memory pub, byte[4] memory data, bytes memory message, uint256 newRoot,
-        Groth16.Proof memory txProof, Groth16.Proof memory treeProof
-    ) onlyOperator external returns(bool) {
-        require(roots[pub.txnumber()]==pub.root(), "wrong root");
-        require(!nullifiers[pub.nullifier()], "existed nullifier");
-        require(pub.energy_delta()==0, "voucher token deposits or withdrawals disabled");
-
-        int64 amount = pub.token_delta() + data.fee();
-        require (amount >= pub.token_delta() && data.fee()>=0 && amount == 0, "bad token_delta or fee");
-        
-
-        bytes32 h = keccak256(abi.encodePacked(pub, data, message));
-        uint256 h_reduced = Groth16.reduce(uint256(h));
-        require(pub.memo() == h_reduced, "bad memo");
-
-        require(Groth16.verify(pub.toInputs(), txProof, params.vk_tx()), "bad tx proof");
-        
-        nullifiers[pub.nullifier()] = true;
-        _updateRoot(newRoot, pub.out_commit(), treeProof);
-        
-        if (data.fee()>0) {
-            token.safeTransfer(operatorManager.operator(), uint256(data.fee()).mul(denominator));
-        }
-        emit Message(message);
-        return true;
-    }
-
-    function withdraw(
-        byte[152] memory pub, byte[60] memory data, bytes memory message, uint256 newRoot,
-        Groth16.Proof memory txProof, Groth16.Proof memory treeProof
-    ) onlyOperator external payable returns(bool) {
-        require(roots[pub.txnumber()]==pub.root(), "wrong root");
-        require(!nullifiers[pub.nullifier()], "existed nullifier");
-        require(pub.energy_delta()<=0, "voucher token deposits disabled");
-
-        int64 amount = pub.token_delta() + data.fee();
-        require (amount >= pub.token_delta() && data.fee()>=0 && amount <= 0, "bad token_delta or fee");
-        
-        bytes32 h = keccak256(abi.encodePacked(pub, data, message));
-        uint256 h_reduced = Groth16.reduce(uint256(h));
-        require(pub.memo() == h_reduced, "bad memo");
-
-        require(Groth16.verify(pub.toInputs(), txProof, params.vk_tx()), "bad tx proof");
-        
-        nullifiers[pub.nullifier()] = true;
-        _updateRoot(newRoot, pub.out_commit(), treeProof);
-
-        require(data.native_amount()==msg.value, "bad native amount");
-
-        if (msg.value > 0){
-            payable(data.receiver()).transfer(msg.value);
-        }
-        
-        if (amount < 0) {
-            token.safeTransfer(data.receiver(), uint256(-amount).mul(denominator));
-        }
-        
-        if (pub.energy_delta()<0) {
-            voucher_token.mint(data.receiver(), uint256(-pub.energy_delta()));
-        }
-
-        if (data.fee()>0) {
-            token.safeTransfer(operatorManager.operator(), uint256(data.fee()).mul(denominator));
-        }
-        emit Message(message);
-        return true;
-    }
-
+    
 
 }
-
-
 

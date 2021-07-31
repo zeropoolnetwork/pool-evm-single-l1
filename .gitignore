@@ -1,3 +1,6 @@
+contracts/verifiers/*
+.vscode
+
 # Logs
 logs
 *.log
