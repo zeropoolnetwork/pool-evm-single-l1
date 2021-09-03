@@ -110,11 +110,15 @@ contract Parameters {
     }
 
     function memo_size() pure internal returns(uint256 r) {
-        r = uint256(uint8(msg.data[641]));
+        uint256 t;
+        assembly {
+            t:= calldataload(611)
+        }
+        r = t & 0xffff;
     }
 
     function memo_hash() pure internal returns (uint256 r) {
-        r = uint256(keccak256(dataload(642, memo_size()))) % Q;
+        r = uint256(keccak256(dataload(643, memo_size()))) % Q;
     }
 
     function memo_message() pure internal returns (bytes memory r) {
@@ -125,20 +129,20 @@ contract Parameters {
         } else if (t==2) { 
             fixed_size = 36;
         } else revert();    
-        r = dataload(642+fixed_size, memo_size()-fixed_size);
+        r = dataload(643+fixed_size, memo_size()-fixed_size);
     }
     
 
     function memo_fee() pure internal returns (uint256 r) {
         assembly {
-            r := calldataload(618)
+            r := calldataload(619)
         }
         r &= 0xffffffffffffffff;
     }
 
     function memo_native_amount() pure internal returns (uint256 r) {
         assembly {
-            r := calldataload(626)
+            r := calldataload(627)
         }
         r &= 0xffffffffffffffff;
     }
@@ -146,7 +150,7 @@ contract Parameters {
     function memo_receiver() pure internal returns (address r) {
         uint256 t;
         assembly {
-            t := calldataload(646)
+            t := calldataload(647)
         }
         r = address(uint160(t));
     }
@@ -156,7 +160,7 @@ contract Parameters {
         uint8 v;
         bytes32 r;
         bytes32 s;
-        uint t = 642 + memo_size();
+        uint t = 643 + memo_size();
         assembly {
             r := calldataload(t)
             s := calldataload(add(t, 32))
