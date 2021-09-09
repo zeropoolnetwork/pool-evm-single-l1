@@ -125,7 +125,5 @@ contract Pool is Parameters {
         emit Message(memo_message());
         return true;
     }
-    
-
 }
 
