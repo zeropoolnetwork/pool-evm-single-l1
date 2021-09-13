@@ -29,7 +29,7 @@ contract Parameters {
     //     uint256 nullifier;       // 4           
     //     uint256 out_commit;      // 36
     //     uint48 index;            // 42
-    //     int112 energy_amount;    // 56
+    //     int64 energy_amount;     // 56
     //     int64 token_amount;      // 64
     //     uint256 memo;            // --skip
     // }
@@ -60,7 +60,7 @@ contract Parameters {
         assembly {
             t:=calldataload(56)
         }
-        r = int256(int112(uint112(t)));
+        r = int256(int64(uint64(t)));
     } 
 
     function transfer_token_amount() pure internal returns(int256 r) {
