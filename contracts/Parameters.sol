@@ -18,7 +18,7 @@ contract Parameters {
         r[2] = transfer_out_commit();
         uint256 t;
         assembly {
-            t:=calldataload(64)
+            t:=calldataload(58)
         }
         r[3] = t & 0xfffffff;
         r[4] = memo_hash();
@@ -30,7 +30,7 @@ contract Parameters {
     //     uint256 out_commit;      // 36
     //     uint48 index;            // 42
     //     int64 energy_amount;     // 56
-    //     int64 token_amount;      // 64
+    //     int64 token_amount;      // 58
     //     uint256 memo;            // --skip
     // }
 
@@ -66,7 +66,7 @@ contract Parameters {
     function transfer_token_amount() pure internal returns(int256 r) {
         uint256 t;
         assembly {
-            t:=calldataload(64)
+            t:=calldataload(58)
         }
         r = int256(int64(uint64(t)));
     }
@@ -74,7 +74,7 @@ contract Parameters {
 
     function transfer_proof() pure internal returns (uint256[8] memory r) {
         assembly {
-            calldatacopy(r, 96, 256)
+            calldatacopy(r, 90, 256)
         }
     }
 
@@ -94,31 +94,31 @@ contract Parameters {
 
     function tree_root_after() pure internal returns(uint256 r) {
         assembly {
-            r:=calldataload(352)
+            r:=calldataload(346)
         }
     }
 
 
     function tree_proof() pure internal returns (uint256[8] memory r) {
         assembly {
-            calldatacopy(r, 384, 256)
+            calldatacopy(r, 378, 256)
         }
     }
 
     function tx_type() pure internal returns(uint256 r) {
-        r = uint256(uint8(msg.data[640]));
+        r = uint256(uint8(msg.data[634]));
     }
 
     function memo_size() pure internal returns(uint256 r) {
         uint256 t;
         assembly {
-            t:= calldataload(611)
+            t:= calldataload(605)
         }
         r = t & 0xffff;
     }
 
     function memo_hash() pure internal returns (uint256 r) {
-        r = uint256(keccak256(dataload(643, memo_size()))) % Q;
+        r = uint256(keccak256(dataload(637, memo_size()))) % Q;
     }
 
     function memo_message() pure internal returns (bytes memory r) {
@@ -129,20 +129,20 @@ contract Parameters {
         } else if (t==2) { 
             fixed_size = 36;
         } else revert();    
-        r = dataload(643+fixed_size, memo_size()-fixed_size);
+        r = dataload(637+fixed_size, memo_size()-fixed_size);
     }
     
 
     function memo_fee() pure internal returns (uint256 r) {
         assembly {
-            r := calldataload(619)
+            r := calldataload(613)
         }
         r &= 0xffffffffffffffff;
     }
 
     function memo_native_amount() pure internal returns (uint256 r) {
         assembly {
-            r := calldataload(627)
+            r := calldataload(621)
         }
         r &= 0xffffffffffffffff;
     }
@@ -150,7 +150,7 @@ contract Parameters {
     function memo_receiver() pure internal returns (address r) {
         uint256 t;
         assembly {
-            t := calldataload(647)
+            t := calldataload(641)
         }
         r = address(uint160(t));
     }
