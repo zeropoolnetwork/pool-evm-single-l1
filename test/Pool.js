@@ -39,7 +39,7 @@ describe("Pool", async function() {
         const sample_nullifier =  rand_fr_hex();
         const sample_out_commit = rand_fr_hex();
         const sample_transfer_index = "000000000000";
-        const sample_enery_amount = "0000000000000000000000000000";
+        const sample_enery_amount = "0000000000000000";
         const sample_token_amount = "0000000000000000";
         const sample_transact_proof = rand_fr_hex_list(8);
         const sample_root_after = rand_fr_hex();
