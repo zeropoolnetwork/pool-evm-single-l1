@@ -20,7 +20,7 @@ contract Parameters {
         assembly {
             t:=calldataload(58)
         }
-        r[3] = t & 0xfffffff;
+        r[3] = t & 0xffffffffffffffffffffffffffffffff;
         r[4] = memo_hash();
     }
 
@@ -29,7 +29,7 @@ contract Parameters {
     //     uint256 nullifier;       // 4           
     //     uint256 out_commit;      // 36
     //     uint48 index;            // 42
-    //     int64 energy_amount;     // 56
+    //     int64 energy_amount;     // 50
     //     int64 token_amount;      // 58
     //     uint256 memo;            // --skip
     // }
@@ -58,7 +58,7 @@ contract Parameters {
     function transfer_energy_amount() pure internal returns(int256 r) {
         uint256 t;
         assembly {
-            t:=calldataload(56)
+            t:=calldataload(50)
         }
         r = int256(int64(uint64(t)));
     } 

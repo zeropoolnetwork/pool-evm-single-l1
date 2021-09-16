@@ -119,8 +119,8 @@ contract Pool is Parameters {
 
         // Tree part
         require(tree_verifier.verifyProof(tree_pub(roots[_transfer_num]), tree_proof()), "bad tree proof");
-        roots[_transfer_num+1] = tree_root_after();
-        transfer_num = _transfer_num+1;
+        roots[_transfer_num+128] = tree_root_after();
+        transfer_num = _transfer_num+128;
     
         emit Message(memo_message());
         return true;
