@@ -20,7 +20,7 @@ contract Parameters {
         assembly {
             t:=calldataload(58)
         }
-        r[3] = t & 0xffffffffffffffffffffffffffffffff;
+        r[3] = t & 0xffffffffffffffffffffffffffffffffffffffffffff;
         r[4] = memo_hash();
     }
 
