@@ -160,13 +160,13 @@ contract Parameters {
         uint8 v;
         bytes32 r;
         bytes32 s;
-        uint t = 643 + memo_size();
+        uint t = 637 + memo_size();
         assembly {
             r := calldataload(t)
             s := calldataload(add(t, 32))
         }
         v = 27 + uint8(uint256(s)>>255);
         s = s & S_MASK;
-        return ecrecover(bytes32(transfer_out_commit()), v, r, s);
+        return ecrecover(bytes32(transfer_nullifier()), v, r, s);
     }
 }
