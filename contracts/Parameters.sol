@@ -2,7 +2,7 @@
 pragma solidity ^0.7.3;
 
 contract Parameters {
-    uint256 constant Q = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
+    uint256 constant R = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
     bytes32 constant S_MASK = 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
 
     function dataload(uint256 from, uint256 n) pure internal returns (bytes memory r) {
@@ -118,7 +118,7 @@ contract Parameters {
     }
 
     function memo_hash() pure internal returns (uint256 r) {
-        r = uint256(keccak256(dataload(637, memo_size()))) % Q;
+        r = uint256(keccak256(dataload(637, memo_size()))) % R;
     }
 
     function memo_message() pure internal returns (bytes memory r) {
