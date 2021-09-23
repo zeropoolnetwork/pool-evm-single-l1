@@ -4,6 +4,7 @@ pragma solidity ^0.7.3;
 contract Parameters {
     uint256 constant Q = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
     bytes32 constant S_MASK = 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+    bytes constant MESSAGE_PREFIX = "\x19Ethereum Signed Message:\n32";
 
     function dataload(uint256 from, uint256 n) pure internal returns (bytes memory r) {
         r = new bytes(n);
@@ -167,6 +168,11 @@ contract Parameters {
         }
         v = 27 + uint8(uint256(s)>>255);
         s = s & S_MASK;
-        return ecrecover(bytes32(transfer_nullifier()), v, r, s);
+        require(
+            uint256(s) <= 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0,
+            "ECDSA: invalid signature 's' value"
+        );
+        bytes32 prefixedHash = keccak256(abi.encodePacked(MESSAGE_PREFIX, bytes32(transfer_nullifier())));
+        return ecrecover(prefixedHash, v, r, s);
     }
 }
