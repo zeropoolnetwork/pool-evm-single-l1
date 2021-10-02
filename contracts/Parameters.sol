@@ -2,8 +2,9 @@
 pragma solidity ^0.7.3;
 
 contract Parameters {
-    uint256 constant Q = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
+    uint256 constant R = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
     bytes32 constant S_MASK = 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+    bytes constant MESSAGE_PREFIX = "\x19Ethereum Signed Message:\n32";
 
     function dataload(uint256 from, uint256 n) pure internal returns (bytes memory r) {
         r = new bytes(n);
@@ -20,7 +21,7 @@ contract Parameters {
         assembly {
             t:=calldataload(58)
         }
-        r[3] = t & 0xffffffffffffffffffffffffffffffff;
+        r[3] = t & 0xffffffffffffffffffffffffffffffffffffffffffff;
         r[4] = memo_hash();
     }
 
@@ -118,7 +119,7 @@ contract Parameters {
     }
 
     function memo_hash() pure internal returns (uint256 r) {
-        r = uint256(keccak256(dataload(637, memo_size()))) % Q;
+        r = uint256(keccak256(dataload(637, memo_size()))) % R;
     }
 
     function memo_message() pure internal returns (bytes memory r) {
@@ -160,13 +161,18 @@ contract Parameters {
         uint8 v;
         bytes32 r;
         bytes32 s;
-        uint t = 643 + memo_size();
+        uint t = 637 + memo_size();
         assembly {
             r := calldataload(t)
             s := calldataload(add(t, 32))
         }
         v = 27 + uint8(uint256(s)>>255);
         s = s & S_MASK;
-        return ecrecover(bytes32(transfer_out_commit()), v, r, s);
+        require(
+            uint256(s) <= 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0,
+            "ECDSA: invalid signature 's' value"
+        );
+        bytes32 prefixedHash = keccak256(abi.encodePacked(MESSAGE_PREFIX, bytes32(transfer_nullifier())));
+        return ecrecover(prefixedHash, v, r, s);
     }
 }
