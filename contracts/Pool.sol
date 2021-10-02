@@ -54,7 +54,7 @@ contract Pool is Parameters {
         _;
     }
 
-    mapping (uint256 => bool) public nullifiers;
+    mapping (uint256 => uint256) public nullifiers;
     mapping (uint256 => uint256) public roots;
     uint256 public transfer_num;
 
@@ -78,7 +78,7 @@ contract Pool is Parameters {
     function transact() external payable onlyOperator returns(bool) {
         // Transfer part
         require(transfer_verifier.verifyProof(transfer_pub(roots[transfer_index()]), transfer_proof()), "bad transfer proof"); 
-        require(!nullifiers[transfer_nullifier()],"doublespend detected");
+        require(nullifiers[transfer_nullifier()]==0,"doublespend detected");
         uint256 _transfer_num = transfer_num;
         require(transfer_index() <= _transfer_num, "transfer index out of bounds");
 
@@ -114,7 +114,8 @@ contract Pool is Parameters {
             token.safeTransfer(operatorManager.operator(), fee.mul(denominator));
         }
 
-        nullifiers[transfer_nullifier()] = true;
+        // this data could be used to rescue burned funds
+        nullifiers[transfer_nullifier()] = (1<<255) | (uint64(int64(transfer_token_amount())) << 48) | _transfer_num;
 
 
         // Tree part
