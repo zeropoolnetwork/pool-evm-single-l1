@@ -115,7 +115,7 @@ contract Pool is Parameters {
         }
 
         // this data could be used to rescue burned funds
-        nullifiers[transfer_nullifier()] = (1<<255) | (uint64(int64(transfer_token_amount())) << 48) | _transfer_num;
+        nullifiers[transfer_nullifier()] = (1<<255) | (uint64(int64(transfer_token_amount())) << 112) | (uint64(int64(transfer_energy_amount())) << 48) | _transfer_num;
 
 
         // Tree part
