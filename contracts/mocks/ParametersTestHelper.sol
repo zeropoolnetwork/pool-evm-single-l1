@@ -4,9 +4,15 @@ pragma solidity ^0.7.3;
 import "../Parameters.sol";
 
 contract ParametersTestHelper is Parameters {
+    uint256 public test_parameter;
+    
+    function set_test_parameter(uint256 t) external {
+        test_parameter = t;
+    }
 
-    function test_transfer_pub(uint256 root) pure external returns (uint256[5] memory r) {
-        r = transfer_pub(root);
+
+    function test_transfer_pub() view external returns (uint256[5] memory r) {
+        r = transfer_pub(test_parameter);
     }
     
     function test_transfer_nullifier() pure external returns(uint256 r) {
@@ -35,8 +41,8 @@ contract ParametersTestHelper is Parameters {
     }
 
 
-    function test_tree_pub(uint256 root_before) pure external returns (uint256[3] memory r) {
-        r = tree_pub(root_before);
+    function test_tree_pub() view external returns (uint256[3] memory r) {
+        r = tree_pub(test_parameter);
     }
 
 
