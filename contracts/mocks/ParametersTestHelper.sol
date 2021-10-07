@@ -13,74 +13,73 @@ contract ParametersTestHelper is Parameters {
         r = transfer_nullifier();
     }
 
-    function test_transfer_out_commit() pure internal returns(uint256 r) {
+    function test_transfer_out_commit() pure external returns(uint256 r) {
         r = transfer_out_commit();
     }
 
-    function test_transfer_index() pure internal returns(uint48 r) {
+    function test_transfer_index() pure external returns(uint48 r) {
         r = transfer_index();
     }
 
-    function test_transfer_energy_amount() pure internal returns(int256 r) {
+    function test_transfer_energy_amount() pure external returns(int256 r) {
         r = transfer_energy_amount();
     } 
 
-    function test_transfer_token_amount() pure internal returns(int256 r) {
+    function test_transfer_token_amount() pure external returns(int256 r) {
         r = transfer_token_amount();
     }
 
 
-    function test_transfer_proof() pure internal returns (uint256[8] memory r) {
+    function test_transfer_proof() pure external returns (uint256[8] memory r) {
         r=transfer_proof();
     }
 
 
-    function test_tree_pub(uint256 root_before) pure internal returns (uint256[3] memory r) {
+    function test_tree_pub(uint256 root_before) pure external returns (uint256[3] memory r) {
         r = tree_pub(root_before);
     }
 
 
-    function test_tree_root_after() pure internal returns(uint256 r) {
+    function test_tree_root_after() pure external returns(uint256 r) {
         r = tree_root_after();
     }
 
 
-    function test_tree_proof() pure internal returns (uint256[8] memory r) {
+    function test_tree_proof() pure external returns (uint256[8] memory r) {
         r = tree_proof();
     }
 
-    function test_tx_type() pure internal returns(uint256 r) {
+    function test_tx_type() pure external returns(uint256 r) {
         r = tx_type();
     }
 
-    function test_memo_size() pure internal returns(uint256 r) {
+    function test_memo_size() pure external returns(uint256 r) {
         r = memo_size();
     }
 
-    function test_memo_hash() pure internal returns (uint256 r) {
+    function test_memo_hash() pure external returns (uint256 r) {
         r = memo_hash();
     }
 
-    function test_memo_message() pure internal returns (bytes memory r) {
+    function test_memo_message() pure external returns (bytes memory r) {
         r = memo_message();
     }
     
 
-    function test_memo_fee() pure internal returns (uint256 r) {
+    function test_memo_fee() pure external returns (uint256 r) {
         r = memo_fee();
     }
 
-    function test_memo_native_amount() pure internal returns (uint256 r) {
+    function test_memo_native_amount() pure external returns (uint256 r) {
         r = memo_native_amount();
     }
-    }
 
-    function test_memo_receiver() pure internal returns (address r) {
+    function test_memo_receiver() pure external returns (address r) {
         r = memo_receiver();
     }
 
 
-    function test_deposit_spender() pure internal returns (address) {
+    function test_deposit_spender() pure external returns (address r) {
         r = deposit_spender();
     }
 
@@ -156,8 +155,10 @@ contract ParametersTestHelper is Parameters {
     function test_deposit_spender_selector() pure external returns(bytes4) {
         return this.test_deposit_spender.selector;
     }
-
+    
     fallback() external payable {
-        revert("fallback not supported");
+        revert("wrong selector used");
     }
+
+
 }
