@@ -1,3 +1,5 @@
+const fs = require('fs');
+
 require('dotenv').config()
 
 async function deploy() {
@@ -32,6 +34,10 @@ async function deploy() {
       transferVerifier.address, treeVerifier.address, operatorManagerMock.address, initialRoot);
 
   await pool.deployed();
+
+
+  const data = JSON.stringify({ pool: pool.address, token: testToken.address });
+  fs.writeFileSync('addresses.json', data);
 
   return {
     pool,

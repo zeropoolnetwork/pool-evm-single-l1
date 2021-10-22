@@ -75,7 +75,7 @@ contract Pool is Parameters {
 
 
 
-    function transact() external payable onlyOperator returns(bool) {
+    function transact() external payable returns(bool) {
         // Transfer part
         require(transfer_verifier.verifyProof(transfer_pub(roots[transfer_index()]), transfer_proof()), "bad transfer proof"); 
         require(nullifiers[transfer_nullifier()]==0,"doublespend detected");
@@ -93,7 +93,7 @@ contract Pool is Parameters {
             require(token_amount==0 && energy_amount==0 && msg.value == 0, "incorrect transfer amounts");
 
         } else if (tx_type()==2) { // Withdraw
-            require(token_amount<=0 && energy_amount<=0 && msg.value == memo_native_amount().mul(native_denominator), "incorrect transfer amounts");
+            require(token_amount<=0 && energy_amount<=0 && msg.value == memo_native_amount().mul(native_denominator), "incorrect withdraw amounts");
 
             if (token_amount<0) {
                 token.safeTransfer(memo_receiver(), uint256(-token_amount).mul(denominator));

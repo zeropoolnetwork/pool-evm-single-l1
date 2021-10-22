@@ -24,9 +24,15 @@ module.exports = {
     ]
   },
   networks: {
+    hardhat: {
+      accounts: {
+        mnemonic: "crazy appear raise time fashion kind pattern crazy device split escape wolf",
+        count: 3,
+      }
+    },
     docker: {
       url: "http://ganache:8545",
     }
-  },
+  }
 };
 
