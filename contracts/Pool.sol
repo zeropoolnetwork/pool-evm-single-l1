@@ -93,7 +93,7 @@ contract Pool is Parameters {
             require(token_amount==0 && energy_amount==0 && msg.value == 0, "incorrect transfer amounts");
 
         } else if (tx_type()==2) { // Withdraw
-            require(token_amount<=0 && energy_amount<=0 && msg.value == memo_native_amount().mul(native_denominator), "incorrect transfer amounts");
+            require(token_amount<=0 && energy_amount<=0 && msg.value == memo_native_amount().mul(native_denominator), "incorrect withdraw amounts");
 
             if (token_amount<0) {
                 token.safeTransfer(memo_receiver(), uint256(-token_amount).mul(denominator));
