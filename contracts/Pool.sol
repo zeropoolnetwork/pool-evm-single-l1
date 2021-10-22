@@ -75,7 +75,7 @@ contract Pool is Parameters {
 
 
 
-    function transact() external payable onlyOperator returns(bool) {
+    function transact() external payable returns(bool) {
         // Transfer part
         require(transfer_verifier.verifyProof(transfer_pub(roots[transfer_index()]), transfer_proof()), "bad transfer proof"); 
         require(nullifiers[transfer_nullifier()]==0,"doublespend detected");
