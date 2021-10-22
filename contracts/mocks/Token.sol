@@ -9,9 +9,9 @@ contract ERC20Mock is Ownable, ERC20 {
 
     // address public minter;
 
-    // constructor(string memory name_, string memory symbol_) ERC20(name_, symbol_)  {
-    //     minter = owner();
-    // }
+    constructor(string memory name_, string memory symbol_) ERC20(name_, symbol_)  {
+        // minter = owner();
+    }
 
     // function setMinter(address _minter) external onlyOwner returns(bool) {
     //     minter = _minter;
