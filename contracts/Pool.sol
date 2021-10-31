@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./Parameters.sol";
+import "./consensus/IOperatorManager.sol";
 
 
 interface ITransferVerifier {
@@ -20,10 +21,6 @@ interface ITreeVerifier {
         uint256[3] memory input,
         uint256[8] memory p
     ) external view returns (bool);
-}
-
-interface IOperatorManager {
-    function operator() external view returns(address);
 }
 
 interface IMintable {
