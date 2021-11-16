@@ -8,6 +8,7 @@
     "ethereum-waffle": "^3.3.0",
     "ethers": "^5.1.4",
     "hardhat": "^2.2.1",
+    "mathjs": "^10.0.0",
     "random-bigint": "0.0.1"
   },
   "dependencies": {

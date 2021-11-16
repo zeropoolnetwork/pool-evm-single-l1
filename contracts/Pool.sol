@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.7.3;
+pragma solidity ^0.7.6;
 
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -53,7 +53,8 @@ contract Pool is Parameters {
 
     mapping (uint256 => uint256) public nullifiers;
     mapping (uint256 => uint256) public roots;
-    uint256 public transfer_num;
+    uint256 public pool_index;
+    bytes32 public all_messages_hash;
 
     constructor(IERC20 _token, IMintable _voucher_token, uint256 _denominator, uint256 _energy_denominator, uint256 _native_denominator, 
         ITransferVerifier _transfer_verifier, ITreeVerifier _tree_verifier, IOperatorManager _operatorManager, uint256 first_root) {
@@ -68,41 +69,47 @@ contract Pool is Parameters {
         roots[0] = first_root;
     }
 
-    event Message(bytes message);
+    event Message(uint256 indexed index, bytes32 indexed hash, bytes message);
 
+    function _root_before() internal view virtual override returns(uint256) {
+        return roots[pool_index];
+    }
 
+    function _root() internal view virtual override returns(uint256) {
+        return roots[_transfer_index()];
+    }
 
     function transact() external payable returns(bool) {
         // Transfer part
-        require(transfer_verifier.verifyProof(transfer_pub(roots[transfer_index()]), transfer_proof()), "bad transfer proof"); 
-        require(nullifiers[transfer_nullifier()]==0,"doublespend detected");
-        uint256 _transfer_num = transfer_num;
-        require(transfer_index() <= _transfer_num, "transfer index out of bounds");
+        require(transfer_verifier.verifyProof(_transfer_pub(), _transfer_proof()), "bad transfer proof"); 
+        require(nullifiers[_transfer_nullifier()]==0,"doublespend detected");
+        uint256 _pool_index = pool_index;
+        require(_transfer_index() <= _pool_index, "transfer index out of bounds");
 
-        uint256 fee = memo_fee();
-        int256 token_amount = transfer_token_amount() + int256(fee);
-        int256 energy_amount = transfer_energy_amount();
+        uint256 fee = _memo_fee();
+        int256 token_amount = _transfer_token_amount() + int256(fee);
+        int256 energy_amount = _transfer_energy_amount();
 
-        if (tx_type()==0) { // Deposit
+        if (_tx_type()==0) { // Deposit
             require(token_amount>=0 && energy_amount==0 && msg.value == 0, "incorrect deposit amounts");
-            token.safeTransferFrom(deposit_spender(), address(this), uint256(token_amount).mul(denominator));
-        } else if (tx_type()==1) { // Transfer 
+            token.safeTransferFrom(_deposit_spender(), address(this), uint256(token_amount).mul(denominator));
+        } else if (_tx_type()==1) { // Transfer 
             require(token_amount==0 && energy_amount==0 && msg.value == 0, "incorrect transfer amounts");
 
-        } else if (tx_type()==2) { // Withdraw
-            require(token_amount<=0 && energy_amount<=0 && msg.value == memo_native_amount().mul(native_denominator), "incorrect withdraw amounts");
+        } else if (_tx_type()==2) { // Withdraw
+            require(token_amount<=0 && energy_amount<=0 && msg.value == _memo_native_amount().mul(native_denominator), "incorrect withdraw amounts");
 
             if (token_amount<0) {
-                token.safeTransfer(memo_receiver(), uint256(-token_amount).mul(denominator));
+                token.safeTransfer(_memo_receiver(), uint256(-token_amount).mul(denominator));
             }
 
             if (energy_amount<0) {
                 require(address(voucher_token)!=address(0), "no voucher token");
-                voucher_token.mint(memo_receiver(), uint256(-energy_amount).mul(energy_denominator));
+                voucher_token.mint(_memo_receiver(), uint256(-energy_amount).mul(energy_denominator));
             }
 
             if (msg.value > 0) {
-                payable(memo_receiver()).transfer(msg.value);
+                payable(_memo_receiver()).transfer(msg.value);
             }
 
         } else revert("Incorrect transaction type");
@@ -112,15 +119,23 @@ contract Pool is Parameters {
         }
 
         // this data could be used to rescue burned funds
-        nullifiers[transfer_nullifier()] = (1<<255) | (uint64(int64(transfer_token_amount())) << 112) | (uint64(int64(transfer_energy_amount())) << 48) | _transfer_num;
+        nullifiers[_transfer_nullifier()] = (1<<255) | (uint64(_transfer_token_amount()) << 160) | (uint112(_transfer_energy_amount()) << 48) | _pool_index;
 
 
         // Tree part
-        require(tree_verifier.verifyProof(tree_pub(roots[_transfer_num]), tree_proof()), "bad tree proof");
-        roots[_transfer_num+128] = tree_root_after();
-        transfer_num = _transfer_num+128;
-    
-        emit Message(memo_message());
+        require(tree_verifier.verifyProof(_tree_pub(), _tree_proof()), "bad tree proof");
+
+        _pool_index +=128;
+        roots[_pool_index] = _tree_root_after();
+        pool_index = _pool_index;
+
+        bytes memory message = _memo_message();
+        bytes32 message_hash = keccak256(message);
+        bytes32 _all_messages_hash = keccak256(abi.encodePacked(all_messages_hash, message_hash));
+        all_messages_hash = _all_messages_hash;
+
+        emit Message(_pool_index, _all_messages_hash, _memo_message());
+
         return true;
     }
 }

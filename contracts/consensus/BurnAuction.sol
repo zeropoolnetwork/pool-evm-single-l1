@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Modified from https://github.com/iden3/rollup/blob/master/contracts/RollupBurnAuction.sol
-pragma solidity ^0.7.3;
+pragma solidity ^0.7.6;
 
 import "./IOperatorManager.sol";
 
