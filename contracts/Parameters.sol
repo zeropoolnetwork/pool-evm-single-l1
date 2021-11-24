@@ -192,13 +192,14 @@ abstract contract Parameters is CustomABIDecoder {
 
     function _root() view internal virtual returns(uint256);
     function _root_before() view internal virtual returns(uint256);
+    function _pool_id() view internal virtual returns(uint256);
     
 
     function _transfer_pub() view internal returns (uint256[5] memory r) {
         r[0] = _root();
         r[1] = _transfer_nullifier();
         r[2] = _transfer_out_commit();
-        r[3] = _transfer_delta();
+        r[3] = _transfer_delta() + (_pool_id()<<transfer_delta_size);
         r[4] = uint256(keccak256(_memo_data())) % R;
     }
 

@@ -36,6 +36,9 @@ contract Pool is Parameters {
     uint256 immutable public denominator;
     uint256 immutable public energy_denominator;
     uint256 immutable public native_denominator;
+    uint256 immutable public pool_id;
+
+    uint256 constant internal MAX_POOL_ID = 0xffffff;
 
     ITransferVerifier immutable public transfer_verifier;
     ITreeVerifier immutable public tree_verifier;
@@ -53,8 +56,10 @@ contract Pool is Parameters {
     uint256 public pool_index;
     bytes32 public all_messages_hash;
 
-    constructor(IERC20 _token, IMintable _voucher_token, uint256 _denominator, uint256 _energy_denominator, uint256 _native_denominator, 
+    constructor(uint256 __pool_id, IERC20 _token, IMintable _voucher_token, uint256 _denominator, uint256 _energy_denominator, uint256 _native_denominator, 
         ITransferVerifier _transfer_verifier, ITreeVerifier _tree_verifier, IOperatorManager _operatorManager, uint256 first_root) {
+
+        require(__pool_id <= MAX_POOL_ID);
         token=_token;
         voucher_token=_voucher_token;
         denominator=_denominator;
@@ -64,16 +69,21 @@ contract Pool is Parameters {
         tree_verifier=_tree_verifier;
         operatorManager=_operatorManager;
         roots[0] = first_root;
+        pool_id = __pool_id;
     }
 
     event Message(uint256 indexed index, bytes32 indexed hash, bytes message);
 
-    function _root_before() internal view virtual override returns(uint256) {
+    function _root_before() internal view override returns(uint256) {
         return roots[pool_index];
     }
 
-    function _root() internal view virtual override returns(uint256) {
+    function _root() internal view override returns(uint256) {
         return roots[_transfer_index()];
+    }
+
+    function _pool_id() internal view override returns(uint256) {
+        return pool_id;
     }
 
     function transact() external payable returns(bool) {
