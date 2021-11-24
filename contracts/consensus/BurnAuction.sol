@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Modified from https://github.com/iden3/rollup/blob/master/contracts/RollupBurnAuction.sol
-pragma solidity ^0.7.6;
+pragma solidity ^0.8.10;
 
 import "./IOperatorManager.sol";
 
@@ -55,7 +55,7 @@ contract BurnAuction is IOperatorManager {
         if (auction[auctionSlot].initialized && auction[auctionSlot].amount > 0)
             auction[auctionSlot].operator.transfer(auction[auctionSlot].amount);
         // set new best bider
-        auction[auctionSlot].operator = msg.sender;
+        auction[auctionSlot].operator = payable(msg.sender);
         auction[auctionSlot].amount = uint128(msg.value);
         auction[auctionSlot].initialized = true;
         emit newBestBid(

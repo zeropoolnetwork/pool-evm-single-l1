@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.7.6;
+pragma solidity ^0.8.10;
 
 /*
 uint256;*;32;transfer_nullifier;
@@ -10,7 +10,7 @@ int64;*;8;transfer_token_amount;
 uint256[8] calldata;*;256;transfer_proof
 uint256;32;*;tree_root_after
 uint256[8] calldata;*;256;tree_proof
-uint256;*;1;tx_type
+uint256;*;2;tx_type
 uint256;*;2;memo_data_size
 bytes calldata;*;memo_data_size();memo_data
 bytes32;*;32;sign_r
@@ -54,14 +54,14 @@ contract CustomABIDecoder {
     uint256 constant transfer_energy_amount_size = 14;
 
     function _transfer_energy_amount() pure internal returns(int112 r) {
-        r = int112(_loaduint256(transfer_energy_amount_pos+transfer_energy_amount_size-32));
+        r = int112(uint112(_loaduint256(transfer_energy_amount_pos+transfer_energy_amount_size-32)));
     }
 
     uint256 constant transfer_token_amount_pos = transfer_energy_amount_pos + transfer_energy_amount_size;
     uint256 constant transfer_token_amount_size = 8;
 
     function _transfer_token_amount() pure internal returns(int64 r) {
-        r = int64(_loaduint256(transfer_token_amount_pos+transfer_token_amount_size-32));
+        r = int64(uint64(_loaduint256(transfer_token_amount_pos+transfer_token_amount_size-32)));
     }
 
     uint256 constant transfer_proof_pos = transfer_token_amount_pos + transfer_token_amount_size;
@@ -178,7 +178,7 @@ contract CustomABIDecoder {
     uint256 constant memo_receiver_size = 20;
 
     function _memo_receiver() pure internal returns(address r) {
-        r = address(_loaduint256(memo_receiver_pos+memo_receiver_size-32));
+        r = address(uint160(_loaduint256(memo_receiver_pos+memo_receiver_size-32)));
     }
 
 }

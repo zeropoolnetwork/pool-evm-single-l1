@@ -12,6 +12,6 @@
     "random-bigint": "0.0.1"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^3.4.1"
+    "@openzeppelin/contracts": "^4.3.3"
   }
 }

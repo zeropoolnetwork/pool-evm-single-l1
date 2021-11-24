@@ -1,10 +1,8 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.7.6;
-
+pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./Parameters.sol";
 import "./consensus/IOperatorManager.sol";
 
@@ -29,7 +27,6 @@ interface IMintable {
 
 contract Pool is Parameters {
     using SafeERC20 for IERC20;
-    using SafeMath for uint256;
 
     IERC20 immutable public token;
     IMintable immutable public voucher_token;
@@ -92,20 +89,20 @@ contract Pool is Parameters {
 
         if (_tx_type()==0) { // Deposit
             require(token_amount>=0 && energy_amount==0 && msg.value == 0, "incorrect deposit amounts");
-            token.safeTransferFrom(_deposit_spender(), address(this), uint256(token_amount).mul(denominator));
+            token.safeTransferFrom(_deposit_spender(), address(this), uint256(token_amount) * denominator);
         } else if (_tx_type()==1) { // Transfer 
             require(token_amount==0 && energy_amount==0 && msg.value == 0, "incorrect transfer amounts");
 
         } else if (_tx_type()==2) { // Withdraw
-            require(token_amount<=0 && energy_amount<=0 && msg.value == _memo_native_amount().mul(native_denominator), "incorrect withdraw amounts");
+            require(token_amount<=0 && energy_amount<=0 && msg.value == _memo_native_amount()*native_denominator, "incorrect withdraw amounts");
 
             if (token_amount<0) {
-                token.safeTransfer(_memo_receiver(), uint256(-token_amount).mul(denominator));
+                token.safeTransfer(_memo_receiver(), uint256(-token_amount)*denominator);
             }
 
             if (energy_amount<0) {
                 require(address(voucher_token)!=address(0), "no voucher token");
-                voucher_token.mint(_memo_receiver(), uint256(-energy_amount).mul(energy_denominator));
+                voucher_token.mint(_memo_receiver(), uint256(-energy_amount)*energy_denominator);
             }
 
             if (msg.value > 0) {
@@ -115,7 +112,7 @@ contract Pool is Parameters {
         } else revert("Incorrect transaction type");
 
         if (fee>0) {
-            token.safeTransfer(operatorManager.operator(), fee.mul(denominator));
+            token.safeTransfer(operatorManager.operator(), fee*denominator);
         }
 
         // this data could be used to rescue burned funds
