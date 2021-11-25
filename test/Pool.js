@@ -39,12 +39,12 @@ describe("Pool", async function() {
         const sample_nullifier =  rand_fr_hex();
         const sample_out_commit = rand_fr_hex();
         const sample_transfer_index = "000000000000";
-        const sample_enery_amount = "0000000000000000";
+        const sample_enery_amount = "0000000000000000000000000000";
         const sample_token_amount = "0000000000000000";
         const sample_transact_proof = rand_fr_hex_list(8);
         const sample_root_after = rand_fr_hex();
         const sample_tree_proof = rand_fr_hex_list(8);
-        const sample_tx_type = "01"; // transaction
+        const sample_tx_type = "0001"; // transaction
         const sample_memo_size = "0030"; // memo block size
         const sample_memo_fee = "0000000000000000"; // here is smart contract level metadata, only fee for 01 type
         const sample_memo_message = rand_bigint_hex(parseInt(sample_memo_size, 16)-sample_memo_fee.length/2); //here is encrypted tx metadata, used on client only

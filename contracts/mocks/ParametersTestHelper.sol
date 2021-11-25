@@ -12,6 +12,10 @@ contract ParametersTestHelper is Parameters {
     function _root_before() view internal virtual override returns(uint256) {
         return test_parameter;
     }
+
+    function _pool_id() view internal virtual override returns(uint256) {
+        return 0;
+    }
     
     function set_test_parameter(uint256 t) external {
         test_parameter = t;

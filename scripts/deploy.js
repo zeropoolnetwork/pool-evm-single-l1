@@ -22,6 +22,7 @@ async function deploy() {
   const treeVerifier = await TreeVerifier.deploy();
   const testToken = await Token.deploy("Test Token", "TEST1");
   const voucherToken = await Token.deploy("Voucher Token", "TEST2");
+  const poolId = "0";
   
   await operatorManagerMock.deployed();
   await transferVerifier.deployed();
@@ -30,14 +31,14 @@ async function deploy() {
   await voucherToken.deployed();
 
   const initialRoot = "11469701942666298368112882412133877458305516134926649826543144744382391691533"
-  const pool = await Pool.deploy(testToken.address, voucherToken.address, "1000000000", "1000000000", "1000000000", 
+  const pool = await Pool.deploy(poolId, testToken.address, voucherToken.address, "1000000000", "1000000000", "1000000000", 
       transferVerifier.address, treeVerifier.address, operatorManagerMock.address, initialRoot);
 
   await pool.deployed();
 
 
   const data = JSON.stringify({ pool: pool.address, token: testToken.address });
-  fs.writeFileSync('addresses.json', data);
+  //fs.writeFileSync('addresses.json', data);
 
   return {
     pool,
