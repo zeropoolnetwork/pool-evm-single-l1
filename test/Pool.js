@@ -25,11 +25,12 @@ function rand_fr_hex_list(n) {
     return a.join("");
 }
 
-
+process.env["MOCK_TX_VERIFIER"] = "true";
+process.env["MOCK_TREE_VERIFIER"] = "true";
 
 describe("Pool", async function() {
     it("Should perform transaction", async function () {
-        const [owner] = await ethers.getSigners();
+        const [,, relayer] = await ethers.getSigners();
 
         const { pool, Pool } = await deploy();
 
@@ -57,8 +58,8 @@ describe("Pool", async function() {
         ].join("");
 
 
-        await owner.sendTransaction({
-            from: owner.address,
+        await relayer.sendTransaction({
+            from: relayer.address,
             to: pool.address,
             data
         });

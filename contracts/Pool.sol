@@ -3,8 +3,10 @@ pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "./Parameters.sol";
 import "./consensus/IOperatorManager.sol";
+
 
 
 interface ITransferVerifier {
@@ -25,26 +27,23 @@ interface IMintable {
     function mint(address,uint256) external returns(bool);
 }
 
-contract Pool is Parameters {
+contract Pool is Parameters, Initializable {
     using SafeERC20 for IERC20;
 
+    uint256 immutable public pool_id;
     IERC20 immutable public token;
     IMintable immutable public voucher_token;
-
-
-
     uint256 immutable public denominator;
     uint256 immutable public energy_denominator;
     uint256 immutable public native_denominator;
-    uint256 immutable public pool_id;
+    ITransferVerifier immutable public transfer_verifier;
+    ITreeVerifier immutable public tree_verifier;
+    IOperatorManager immutable public operatorManager;
+    uint256 immutable internal first_root;
 
     uint256 constant internal MAX_POOL_ID = 0xffffff;
 
-    ITransferVerifier immutable public transfer_verifier;
-    ITreeVerifier immutable public tree_verifier;
 
-    
-    IOperatorManager immutable public operatorManager;
 
     modifier onlyOperator() {
         require(operatorManager.operator()==msg.sender);
@@ -56,9 +55,10 @@ contract Pool is Parameters {
     uint256 public pool_index;
     bytes32 public all_messages_hash;
 
-    constructor(uint256 __pool_id, IERC20 _token, IMintable _voucher_token, uint256 _denominator, uint256 _energy_denominator, uint256 _native_denominator, 
-        ITransferVerifier _transfer_verifier, ITreeVerifier _tree_verifier, IOperatorManager _operatorManager, uint256 first_root) {
+    
 
+    constructor(uint256 __pool_id, IERC20 _token, IMintable _voucher_token, uint256 _denominator, uint256 _energy_denominator, uint256 _native_denominator, 
+        ITransferVerifier _transfer_verifier, ITreeVerifier _tree_verifier, IOperatorManager _operatorManager, uint256 _first_root) {
         require(__pool_id <= MAX_POOL_ID);
         token=_token;
         voucher_token=_voucher_token;
@@ -68,8 +68,12 @@ contract Pool is Parameters {
         transfer_verifier=_transfer_verifier;
         tree_verifier=_tree_verifier;
         operatorManager=_operatorManager;
-        roots[0] = first_root;
+        first_root = _first_root;
         pool_id = __pool_id;
+    }
+
+    function initialize() public initializer{
+        roots[0] = first_root;
     }
 
     event Message(uint256 indexed index, bytes32 indexed hash, bytes message);

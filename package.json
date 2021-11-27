@@ -12,6 +12,7 @@
     "random-bigint": "0.0.1"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^4.3.3"
+    "@openzeppelin/contracts": "^4.3.3",
+    "@ethersproject/address": "^5.5.0"
   }
 }
