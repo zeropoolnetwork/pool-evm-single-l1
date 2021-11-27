@@ -56,6 +56,14 @@ module.exports = {
       },
       chainId: 0x66
     },
+    sokol: {
+      url: 'https://sokol.poa.network/',
+      accounts: {
+        mnemonic: process.env.MNEMONIC,
+        count: 3
+      },
+      chainId: 77
+    },
     ganache: {
       url: 'http://127.0.0.1:8545/',
       accounts: {
