@@ -20,6 +20,39 @@ task("accounts", "Prints the list of accounts", async () => {
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
+
+const localDevnets = {
+  hardhat: {
+  },
+  localhost: {
+    url: 'http://127.0.0.1:8545/'
+  },
+  docker: {
+    url: "http://ganache:8545",
+  }
+};
+
+
+const networks = typeof process.env.MNEMONIC === 'undefined' ? {} : {
+  xdai_testnet: {
+    url: 'http://104.200.30.151:8545/',
+    accounts: {
+      mnemonic: process.env.MNEMONIC,
+      count: 3
+    },
+    chainId: 0x66
+  },
+  sokol: {
+    url: 'https://sokol.poa.network/',
+    accounts: {
+      mnemonic: process.env.MNEMONIC,
+      count: 3
+    },
+    chainId: 77
+  }
+};
+
+
 module.exports = {
   solidity: {
     compilers: [
@@ -43,31 +76,6 @@ module.exports = {
       },
     ]
   },
-  networks: {
-    hardhat: {
-    },
-    localhost: {
-      url: 'http://127.0.0.1:8545/'
-    },
-    xdai_testnet: {
-      url: 'http://104.200.30.151:8545/',
-      accounts: {
-        mnemonic: process.env.MNEMONIC,
-        count: 3
-      },
-      chainId: 0x66
-    },
-    sokol: {
-      url: 'https://sokol.poa.network/',
-      accounts: {
-        mnemonic: process.env.MNEMONIC,
-        count: 3
-      },
-      chainId: 77
-    },
-    docker: {
-      url: "http://ganache:8545",
-    }
-  }
+  networks: {...localDevnets, ...networks},
 };
 
