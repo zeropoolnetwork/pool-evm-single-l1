@@ -2,6 +2,8 @@ require("@nomiclabs/hardhat-waffle");
 
 require('dotenv').config()
 
+
+
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
 task("accounts", "Prints the list of accounts", async () => {
@@ -43,10 +45,9 @@ module.exports = {
   },
   networks: {
     hardhat: {
-      accounts: {
-        mnemonic: process.env.MNEMONIC,
-        count: 3,
-      }
+    },
+    ganache: {
+      url: 'http://127.0.0.1:8545/'
     },
     xdai_testnet: {
       url: 'http://104.200.30.151:8545/',
@@ -63,13 +64,6 @@ module.exports = {
         count: 3
       },
       chainId: 77
-    },
-    ganache: {
-      url: 'http://127.0.0.1:8545/',
-      accounts: {
-        mnemonic: process.env.MNEMONIC,
-        count: 3
-      },
     },
     docker: {
       url: "http://ganache:8545",
