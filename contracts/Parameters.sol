@@ -40,7 +40,7 @@ contract CustomABIDecoder {
     uint256 constant transfer_out_commit_size = 32;
 
     function _transfer_out_commit() pure internal returns(uint256 r) {
-        r = _loaduint256(transfer_nullifier_pos);
+        r = _loaduint256(transfer_out_commit_pos);
     }
 
     uint256 constant transfer_index_pos = transfer_out_commit_pos + transfer_out_commit_size;
