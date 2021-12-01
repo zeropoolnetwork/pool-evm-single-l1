@@ -23,6 +23,10 @@ task("accounts", "Prints the list of accounts", async () => {
 
 const localDevnets = {
   hardhat: {
+    accounts: {
+      mnemonic: "crazy appear raise time fashion kind pattern crazy device split escape wolf",
+      count: 3,
+    }
   },
   localhost: {
     url: 'http://127.0.0.1:8545/'
