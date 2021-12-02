@@ -20,8 +20,8 @@ async function deploy() {
   );
   const TreeVerifier = await ethers.getContractFactory(
     process.env.MOCK_TREE_VERIFIER === "true" ?
-    "TreeVerifierMock" :
-    "TreeVerifier"
+    "TreeUpdateVerifierMock" :
+    "TreeUpdateVerifier"
   );
 
 

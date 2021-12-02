@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-contract TreeVerifierMock {
+contract TreeUpdateVerifierMock {
     function verifyProof(
         uint256[3] memory,
         uint256[8] memory
