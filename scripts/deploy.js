@@ -20,7 +20,7 @@ async function deploy() {
   );
   const TreeVerifier = await ethers.getContractFactory(
     process.env.MOCK_TREE_VERIFIER === "true" ?
-    "TreeVerifierMock" :
+    "TreeUpdateVerifierMock" :
     "TreeUpdateVerifier"
   );
 
@@ -34,7 +34,7 @@ async function deploy() {
   await treeVerifier.deployed();
 
   const poolId = "0";
-  let tokenAddress, voucherTokenAddress, poolAddress;
+  let tokenAddress, voucherTokenAddress, poolAddress, poolProxyAddress;
 
 
 
@@ -65,7 +65,7 @@ async function deploy() {
   } else {
     deploy_tokens = ((prev) => async () => {
       await prev();
-      const voucherToken = await MintableToken.deploy("Voucher Token", "VOUCHER", poolAddress, {nonce: nonce++});
+      const voucherToken = await MintableToken.deploy("Voucher Token", "VOUCHER", poolProxyAddress, {nonce: nonce++});
       await voucherToken.deployed();
       console.log(`Voucher token deployed at ${voucherToken.address}`);
     })(deploy_tokens);
@@ -87,8 +87,11 @@ async function deploy() {
   const zeroPoolProxy = await ZeroPoolProxy.deploy(poolAddress, proxyAdmin.address, "0x8129fc1c", {nonce: nonce++});
   await zeroPoolProxy.deployed();
   console.log(`Pool proxy deployed at ${zeroPoolProxy.address}`);
+  poolProxyAddress = zeroPoolProxy.address;
 
   await deploy_tokens();
+
+  await pool.initialize();
 
   const data = JSON.stringify({ proxy: zeroPoolProxy.address, pool: pool.address, token: tokenAddress, voucher: voucherTokenAddress });
   fs.writeFileSync('addresses.json', data);
