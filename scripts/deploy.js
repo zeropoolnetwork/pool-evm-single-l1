@@ -91,15 +91,15 @@ async function deploy() {
 
   await deploy_tokens();
 
-  await pool.initialize();
+  const poolProxified = new ethers.Contract(zeroPoolProxy.address, Pool.interface, relayer);
 
   const data = JSON.stringify({ proxy: zeroPoolProxy.address, pool: pool.address, token: tokenAddress, voucher: voucherTokenAddress });
   fs.writeFileSync('addresses.json', data);
 
 
   return {
-    pool:new ethers.Contract(zeroPoolProxy.address, Pool.interface),
-    Pool,
+    pool:poolProxified,
+    Pool
   };
 }
 
