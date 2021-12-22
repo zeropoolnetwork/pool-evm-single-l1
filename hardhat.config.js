@@ -53,6 +53,22 @@ const networks = typeof process.env.MNEMONIC === 'undefined' ? {} : {
       count: 3
     },
     chainId: 77
+  },
+  aurora_testnet: {
+    url: 'https://testnet.aurora.dev/',
+    accounts: {
+      mnemonic: process.env.MNEMONIC,
+      count: 3
+    },
+    chainId: 1313161555
+  },
+  kovan: {
+    url: 'https://kovan.poa.network/',
+    accounts: {
+      mnemonic: process.env.MNEMONIC,
+      count: 3
+    },
+    chainId: 42
   }
 };
 
