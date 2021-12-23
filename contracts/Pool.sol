@@ -130,7 +130,7 @@ contract Pool is Parameters, Initializable {
         }
 
         // this data could be used to rescue burned funds
-        nullifiers[_transfer_nullifier()] = (1<<255) | (uint64(_transfer_token_amount()) << 160) | (uint112(_transfer_energy_amount()) << 48) | _pool_index;
+        nullifiers[_transfer_nullifier()] = uint256(keccak256(abi.encodePacked(_transfer_out_commit(), _transfer_delta())));
 
 
         // Tree part
