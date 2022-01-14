@@ -1,27 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-/*
-uint256;*;32;transfer_nullifier;
-uint256;*;32;transfer_out_commit;
-uint48;*;6;transfer_index;
-int112;*;14;transfer_energy_amount;
-int64;*;8;transfer_token_amount;
-uint256[8] calldata;*;256;transfer_proof
-uint256;32;*;tree_root_after
-uint256[8] calldata;*;256;tree_proof
-uint256;*;2;tx_type
-uint256;*;2;memo_data_size
-bytes calldata;*;memo_data_size();memo_data
-bytes32;*;32;sign_r
-bytes32;*;32;sign_vs
-uint256;{transfer_index};28;transfer_delta
-bytes calldata;{memo_data}+memo_fixed_size();memo_data_size()-memo_fixed_size();memo_message
-uint256;{memo_data};8;memo_fee
-uint256;*;8;memo_native_amount
-uint256;*;20;memo_receiver
-*/
-
 contract CustomABIDecoder {
     uint256 constant transfer_nullifier_pos = 4;
     uint256 constant transfer_nullifier_size = 32;
