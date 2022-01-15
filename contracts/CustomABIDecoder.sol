@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 contract CustomABIDecoder {
     uint256 constant transfer_nullifier_pos = 4;
     uint256 constant transfer_nullifier_size = 32;
+    uint256 constant uint256_size = 32;
 
     function _loaduint256(uint256 pos) pure internal returns(uint256 r) {
         assembly {
@@ -26,21 +27,21 @@ contract CustomABIDecoder {
     uint256 constant transfer_index_size = 6;
 
     function _transfer_index() pure internal returns(uint48 r) {
-        r = uint48(_loaduint256(transfer_index_pos+transfer_index_size-32));
+        r = uint48(_loaduint256(transfer_index_pos+transfer_index_size-uint256_size));
     }
 
     uint256 constant transfer_energy_amount_pos = transfer_index_pos + transfer_index_size;
     uint256 constant transfer_energy_amount_size = 14;
 
     function _transfer_energy_amount() pure internal returns(int112 r) {
-        r = int112(uint112(_loaduint256(transfer_energy_amount_pos+transfer_energy_amount_size-32)));
+        r = int112(uint112(_loaduint256(transfer_energy_amount_pos+transfer_energy_amount_size-uint256_size)));
     }
 
     uint256 constant transfer_token_amount_pos = transfer_energy_amount_pos + transfer_energy_amount_size;
     uint256 constant transfer_token_amount_size = 8;
 
     function _transfer_token_amount() pure internal returns(int64 r) {
-        r = int64(uint64(_loaduint256(transfer_token_amount_pos+transfer_token_amount_size-32)));
+        r = int64(uint64(_loaduint256(transfer_token_amount_pos+transfer_token_amount_size-uint256_size)));
     }
 
     uint256 constant transfer_proof_pos = transfer_token_amount_pos + transfer_token_amount_size;
@@ -75,7 +76,7 @@ contract CustomABIDecoder {
     uint256 constant tx_type_mask = (1 << (tx_type_size*8)) - 1;
 
     function _tx_type() pure internal returns(uint256 r) {
-        r = _loaduint256(tx_type_pos+tx_type_size-32) & tx_type_mask;
+        r = _loaduint256(tx_type_pos+tx_type_size-uint256_size) & tx_type_mask;
     }
     
     uint256 constant memo_data_size_pos = tx_type_pos + tx_type_size;
@@ -85,7 +86,7 @@ contract CustomABIDecoder {
 
     uint256 constant memo_data_pos = memo_data_size_pos + memo_data_size_size;
     function _memo_data_size() pure internal returns(uint256 r) {
-        r = _loaduint256(memo_data_size_pos+memo_data_size_size-32) & memo_data_size_mask;
+        r = _loaduint256(memo_data_size_pos+memo_data_size_size-uint256_size) & memo_data_size_mask;
     }
 
     function _memo_data() pure internal returns(bytes calldata r) {
@@ -115,7 +116,7 @@ contract CustomABIDecoder {
     uint256 constant transfer_delta_mask = (1<<(transfer_delta_size*8))-1;
 
     function _transfer_delta() pure internal returns(uint256 r) {
-        r = _loaduint256(transfer_index_pos+transfer_delta_size-32) & transfer_delta_mask;
+        r = _loaduint256(transfer_index_pos+transfer_delta_size-uint256_size) & transfer_delta_mask;
     }
 
     function _memo_fixed_size() pure internal returns(uint256 r) {
@@ -142,7 +143,7 @@ contract CustomABIDecoder {
     uint256 constant memo_fee_mask = (1<<(memo_fee_size*8))-1;
 
     function _memo_fee() pure internal returns(uint256 r) {
-        r = _loaduint256(memo_fee_pos+memo_fee_size-32) & memo_fee_mask;
+        r = _loaduint256(memo_fee_pos+memo_fee_size-uint256_size) & memo_fee_mask;
     }
 
     uint256 constant memo_native_amount_pos = memo_fee_pos + memo_fee_size;
@@ -150,14 +151,14 @@ contract CustomABIDecoder {
     uint256 constant memo_native_amount_mask = (1<<(memo_native_amount_size*8))-1;
 
     function _memo_native_amount() pure internal returns(uint256 r) {
-        r = _loaduint256(memo_native_amount_pos+memo_native_amount_size-32) & memo_native_amount_mask;
+        r = _loaduint256(memo_native_amount_pos+memo_native_amount_size-uint256_size) & memo_native_amount_mask;
     }
 
     uint256 constant memo_receiver_pos = memo_native_amount_pos + memo_native_amount_size;
     uint256 constant memo_receiver_size = 20;
 
     function _memo_receiver() pure internal returns(address r) {
-        r = address(uint160(_loaduint256(memo_receiver_pos+memo_receiver_size-32)));
+        r = address(uint160(_loaduint256(memo_receiver_pos+memo_receiver_size-uint256_size)));
     }
 
 }
