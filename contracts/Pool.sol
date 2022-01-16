@@ -4,28 +4,12 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "./interfaces/ITransferVerifier.sol";
+import "./interfaces/ITreeVerifier.sol";
+import "./interfaces/IMintable.sol";
 import "./Parameters.sol";
 import "./consensus/IOperatorManager.sol";
 
-
-
-interface ITransferVerifier {
-    function verifyProof(
-        uint256[5] memory input,
-        uint256[8] memory p
-    ) external view returns (bool);
-}
-
-interface ITreeVerifier {
-    function verifyProof(
-        uint256[3] memory input,
-        uint256[8] memory p
-    ) external view returns (bool);
-}
-
-interface IMintable {
-    function mint(address,uint256) external returns(bool);
-}
 
 contract Pool is Parameters, Initializable {
     using SafeERC20 for IERC20;
