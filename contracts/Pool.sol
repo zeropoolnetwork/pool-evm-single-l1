@@ -75,11 +75,9 @@ contract Pool is Parameters, Initializable {
     }
 
     function transact() external payable onlyOperator returns(bool) {
-        uint256 __transfer_nullifier = _transfer_nullifier();
-
         // Transfer part
         require(transfer_verifier.verifyProof(_transfer_pub(), _transfer_proof()), "bad transfer proof"); 
-        require(nullifiers[__transfer_nullifier]==0,"doublespend detected");
+        require(nullifiers[_transfer_nullifier()]==0,"doublespend detected");
         uint256 _pool_index = pool_index;
         require(_transfer_index() <= _pool_index, "transfer index out of bounds");
 
@@ -116,7 +114,7 @@ contract Pool is Parameters, Initializable {
         }
 
         // this data could be used to rescue burned funds
-        nullifiers[__transfer_nullifier] = uint256(keccak256(abi.encodePacked(_transfer_out_commit(), _transfer_delta())));
+        nullifiers[_transfer_nullifier()] = uint256(keccak256(abi.encodePacked(_transfer_out_commit(), _transfer_delta())));
 
 
         // Tree part
