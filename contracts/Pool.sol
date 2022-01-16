@@ -74,12 +74,26 @@ contract Pool is Parameters, Initializable {
         return uint24(pool_id);
     }
 
-    function transact() external payable onlyOperator returns(bool) {
-        // Transfer part
-        require(transfer_verifier.verifyProof(_transfer_pub(), _transfer_proof()), "bad transfer proof"); 
-        require(nullifiers[_transfer_nullifier()]==0,"doublespend detected");
-        uint256 _pool_index = pool_index;
-        require(_transfer_index() <= _pool_index, "transfer index out of bounds");
+    function transact() external payable onlyOperator {
+        {
+            uint256 _pool_index = pool_index;
+
+            require(transfer_verifier.verifyProof(_transfer_pub(), _transfer_proof()), "bad transfer proof"); 
+            require(nullifiers[_transfer_nullifier()]==0,"doublespend detected");
+            require(_transfer_index() <= _pool_index, "transfer index out of bounds");
+            require(tree_verifier.verifyProof(_tree_pub(), _tree_proof()), "bad tree proof");
+
+            nullifiers[_transfer_nullifier()] = uint256(keccak256(abi.encodePacked(_transfer_out_commit(), _transfer_delta())));
+            _pool_index +=128;
+            roots[_pool_index] = _tree_root_after();
+            pool_index = _pool_index;
+            bytes memory message = _memo_message();
+            bytes32 message_hash = keccak256(message);
+            bytes32 _all_messages_hash = keccak256(abi.encodePacked(all_messages_hash, message_hash));
+            all_messages_hash = _all_messages_hash;
+            emit Message(_pool_index, _all_messages_hash, message);
+        }
+
 
         uint256 fee = _memo_fee();
         int256 token_amount = _transfer_token_amount() + int256(fee);
@@ -113,26 +127,6 @@ contract Pool is Parameters, Initializable {
         if (fee>0) {
             token.safeTransfer(operatorManager.operator(), fee*denominator);
         }
-
-        // this data could be used to rescue burned funds
-        nullifiers[_transfer_nullifier()] = uint256(keccak256(abi.encodePacked(_transfer_out_commit(), _transfer_delta())));
-
-
-        // Tree part
-        require(tree_verifier.verifyProof(_tree_pub(), _tree_proof()), "bad tree proof");
-
-        _pool_index +=128;
-        roots[_pool_index] = _tree_root_after();
-        pool_index = _pool_index;
-
-        bytes memory message = _memo_message();
-        bytes32 message_hash = keccak256(message);
-        bytes32 _all_messages_hash = keccak256(abi.encodePacked(all_messages_hash, message_hash));
-        all_messages_hash = _all_messages_hash;
-
-        emit Message(_pool_index, _all_messages_hash, _memo_message());
-
-        return true;
     }
 }
 
