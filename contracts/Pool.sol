@@ -104,7 +104,8 @@ contract Pool is Parameters, Initializable {
             }
 
             if (msg.value > 0) {
-                payable(_memo_receiver()).transfer(msg.value);
+                (bool success, ) = payable(_memo_receiver()).call{value:msg.value}("");
+                require(success);
             }
 
         } else revert("Incorrect transaction type");
