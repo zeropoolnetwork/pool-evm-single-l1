@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -70,8 +70,8 @@ contract Pool is Parameters, Initializable {
         return roots[_transfer_index()];
     }
 
-    function _pool_id() internal view override returns(uint24) {
-        return uint24(pool_id);
+    function _pool_id() internal view override returns(uint256) {
+        return pool_id;
     }
 
     function transact() external payable onlyOperator {

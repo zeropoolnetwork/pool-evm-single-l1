@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.10;
 
 contract CustomABIDecoder {
     uint256 constant transfer_nullifier_pos = 4;
