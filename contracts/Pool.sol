@@ -100,7 +100,7 @@ contract Pool is Parameters, Initializable {
 
             if (energy_amount<0) {
                 require(address(voucher_token)!=address(0), "no voucher token");
-                voucher_token.mint(_memo_receiver(), uint256(-energy_amount)*energy_denominator);
+                require(voucher_token.mint(_memo_receiver(), uint256(-energy_amount)*energy_denominator));
             }
 
             if (msg.value > 0) {
