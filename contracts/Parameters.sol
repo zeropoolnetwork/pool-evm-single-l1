@@ -35,7 +35,7 @@ abstract contract Parameters is CustomABIDecoder {
         v = 27 + uint8(uint256(s)>>255);
         s = s & S_MASK;
         require(
-            uint256(s) <= 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0,
+            uint256(s) <= S_MAX,
             "ECDSA: invalid signature 's' value"
         );
         bytes32 prefixedHash = keccak256(abi.encodePacked(MESSAGE_PREFIX, bytes32(_transfer_nullifier())));
