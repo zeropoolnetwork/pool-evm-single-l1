@@ -86,8 +86,8 @@ contract Pool is Parameters, Initializable {
         return roots[_transfer_index()];
     }
 
-    function _pool_id() internal view override returns(uint256) {
-        return pool_id;
+    function _pool_id() internal view override returns(uint24) {
+        return uint24(pool_id);
     }
 
     function transact() external payable onlyOperator returns(bool) {
