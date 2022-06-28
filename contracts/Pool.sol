@@ -26,6 +26,8 @@ contract Pool is Parameters, Initializable {
     uint256 immutable internal first_root;
 
     uint256 constant internal MAX_POOL_ID = 0xffffff;
+    uint256 constant internal OUTPUTS_TREE_HEIGHT = 7;
+    uint256 constant internal OUTPUTS_TREE_LEAVES = 1 << OUTPUTS_TREE_HEIGHT;
 
 
 
@@ -84,7 +86,7 @@ contract Pool is Parameters, Initializable {
             require(tree_verifier.verifyProof(_tree_pub(), _tree_proof()), "bad tree proof");
 
             nullifiers[_transfer_nullifier()] = uint256(keccak256(abi.encodePacked(_transfer_out_commit(), _transfer_delta())));
-            _pool_index +=128;
+            _pool_index +=OUTPUTS_TREE_LEAVES;
             roots[_pool_index] = _tree_root_after();
             pool_index = _pool_index;
             bytes memory message = _memo_message();
