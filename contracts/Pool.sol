@@ -124,6 +124,10 @@ contract Pool is Parameters, Initializable {
                 require(success);
             }
 
+        } else if(_tx_type()==3) {
+            revert("Not implemented yet");
+        } else if(_tx_type()==4) {
+            
         } else revert("Incorrect transaction type");
 
         if (fee>0) {
