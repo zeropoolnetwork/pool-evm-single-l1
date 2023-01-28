@@ -9,6 +9,8 @@ import "./interfaces/ITreeVerifier.sol";
 import "./interfaces/IMintable.sol";
 import "./Parameters.sol";
 import "./consensus/IOperatorManager.sol";
+import "./interfaces/IDelegatedDepositStorage.sol";
+import "./interfaces/IDelegatedDepositVerifier.sol";
 
 
 contract Pool is Parameters, Initializable {
@@ -22,6 +24,7 @@ contract Pool is Parameters, Initializable {
     uint256 immutable public native_denominator;
     ITransferVerifier immutable public transfer_verifier;
     ITreeVerifier immutable public tree_verifier;
+    IDelegatedDepositVerifier immutable public delegated_deposit_verifier;
     IOperatorManager immutable public operatorManager;
     uint256 immutable internal first_root;
 
@@ -29,7 +32,7 @@ contract Pool is Parameters, Initializable {
     uint256 constant internal OUTPUTS_TREE_HEIGHT = 7;
     uint256 constant internal OUTPUTS_TREE_LEAVES = 1 << OUTPUTS_TREE_HEIGHT;
 
-
+    IDelegatedDepositStorage public dds;
 
     modifier onlyOperator() {
         require(operatorManager.operator()==msg.sender);
@@ -44,7 +47,7 @@ contract Pool is Parameters, Initializable {
     
 
     constructor(uint256 __pool_id, IERC20 _token, IMintable _voucher_token, uint256 _denominator, uint256 _energy_denominator, uint256 _native_denominator, 
-        ITransferVerifier _transfer_verifier, ITreeVerifier _tree_verifier, IOperatorManager _operatorManager, uint256 _first_root) {
+        ITransferVerifier _transfer_verifier, ITreeVerifier _tree_verifier, IDelegatedDepositVerifier _delegated_deposit_verifier, IOperatorManager _operatorManager, uint256 _first_root) {
         require(__pool_id <= MAX_POOL_ID);
         token=_token;
         voucher_token=_voucher_token;
@@ -56,10 +59,12 @@ contract Pool is Parameters, Initializable {
         operatorManager=_operatorManager;
         first_root = _first_root;
         pool_id = __pool_id;
+        delegated_deposit_verifier = _delegated_deposit_verifier;
     }
 
-    function initialize() public initializer{
+    function initialize(IDelegatedDepositStorage _dds) public initializer{
         roots[0] = first_root;
+        dds = _dds;
     }
 
     event Message(uint256 indexed index, bytes32 indexed hash, bytes message);
@@ -127,7 +132,10 @@ contract Pool is Parameters, Initializable {
         } else if(_tx_type()==3) {
             revert("Not implemented yet");
         } else if(_tx_type()==4) {
-            
+            (uint256 _token_amount, uint256 _fee, uint256 hashsum) = dds.spendMassDeposits(_transfer_out_commit(), _memo_message());
+            require(token_amount>=0 && energy_amount==0 && msg.value == 0, "incorrect deposit amounts");
+            require(_token_amount == uint256(token_amount) && _fee == fee, "inconsistent data");
+            require(delegated_deposit_verifier.verifyProof([hashsum], _memo_delegated_deposit_proof()), "bad delegated deposit proof");
         } else revert("Incorrect transaction type");
 
         if (fee>0) {

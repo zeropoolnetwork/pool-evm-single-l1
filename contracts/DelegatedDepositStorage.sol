@@ -5,9 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/draft-IERC20Permit.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-interface IPoolDenominator {
-    function denominator() external view returns (uint256);
-}
+import "./interfaces/IPoolDenominator.sol";
 
 
 contract DelegatedDepositStorage {
@@ -163,7 +161,11 @@ contract DelegatedDepositStorage {
         return keccak256(d[index*DEPOSIT_SIZE:(index+1)*DEPOSIT_SIZE]);
     }
 
-    function spendMassDeposits(bytes32 prefix, bytes calldata d) external returns(uint256, bytes32) {
+    function bn256reduce(uint256 x) internal pure returns (uint256) {
+        return x % 21888242871839275222246405745257275088548364400416034343698204186575808495617;
+    }
+
+    function spendMassDeposits(uint256 prefix, bytes calldata d) external returns(uint256, uint256, uint256) {
         if (msg.sender != pool) revert OnlyPool();
         uint256 deposits_length;
         {
@@ -192,8 +194,10 @@ contract DelegatedDepositStorage {
             }
         }
 
-        IERC20(token).safeTransfer(pool, (_amount+_fee)*denominator);     
-        return (_fee*denominator, keccak256(deposit_blob));
+        uint256 total_amount = _amount+_fee;
+
+        IERC20(token).safeTransfer(pool, total_amount*denominator);     
+        return (total_amount, _fee, bn256reduce(uint256(keccak256(deposit_blob))));
     }
 
 }

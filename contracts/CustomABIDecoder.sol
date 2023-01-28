@@ -125,6 +125,8 @@ contract CustomABIDecoder {
             r = 8;
         } else if (t==2) { 
             r = 36;
+        } else if (t == 4) {
+            r = 264;
         } else revert(); 
     }
 
@@ -144,6 +146,16 @@ contract CustomABIDecoder {
 
     function _memo_fee() pure internal returns(uint256 r) {
         r = _loaduint256(memo_fee_pos+memo_fee_size-uint256_size) & memo_fee_mask;
+    }
+
+    uint256 constant memo_delegated_deposit_pos = memo_fee_pos + memo_fee_size;
+    uint256 constant memo_delegated_deposit_size = 256;
+
+    function _memo_delegated_deposit_proof() pure internal returns (uint256[8] calldata r) {
+        uint256 pos = memo_delegated_deposit_pos;
+        assembly {
+            r := pos
+        }
     }
 
     uint256 constant memo_native_amount_pos = memo_fee_pos + memo_fee_size;
