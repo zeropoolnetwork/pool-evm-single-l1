@@ -26,24 +26,24 @@ contract DelegatedDepositStorage {
     event DepositSpend(uint256 indexed id);
     
 
-    // size 106 bytes
+    // size 94 bytes
     struct Deposit {
         uint64 id;             // offset 0
         address owner;          // offset 8
-        bytes10 receiver_d;     // offset 40
-        bytes32 receiver_p;     // offset 50
-        uint64 denominated_amount;  // offset 82
-        uint64 denominated_fee; // offset 90
-        uint64 expired;        // offset 98
+        bytes10 receiver_d;     // offset 28
+        bytes32 receiver_p;     // offset 38
+        uint64 denominated_amount;  // offset 70
+        uint64 denominated_fee; // offset 78
+        uint64 expired;        // offset 86
     }
 
-    uint256 internal constant DEPOSIT_SIZE = 106;
+    uint256 internal constant DEPOSIT_SIZE = 94;
     uint256 internal constant ID_OFFSET = 0;
-    uint256 internal constant DENOMINATED_AMOUNT_OFFSET = 82;
-    uint256 internal constant DENOMINATED_FEE_OFFSET = 90;
-    uint256 internal constant EXPIRED_OFFSET = 98;
-    uint256 internal constant RECEIVER_OFFSET = 40;
-    uint256 internal constant RECEIVER_AND_AMOUNT_SIZE = 50;
+    uint256 internal constant DENOMINATED_AMOUNT_OFFSET = 70;
+    uint256 internal constant DENOMINATED_FEE_OFFSET = 79;
+    uint256 internal constant EXPIRED_OFFSET = 86;
+    uint256 internal constant RECEIVER_OFFSET = 28;
+    uint256 internal constant RECEIVER_AND_AMOUNT_SIZE = 38;
 
     uint256 internal constant UINT64_MASK = 0xffffffffffffffff000000000000000000000000000000000000000000000000;
     uint256 internal constant UINT64_SHIFT = 192;
@@ -169,7 +169,7 @@ contract DelegatedDepositStorage {
         if (msg.sender != pool) revert OnlyPool();
         uint256 deposits_length;
         {
-            uint256 d_len = d.length;
+            uint256 d_len = d.length-32;
             if (d_len % DEPOSIT_SIZE != 0) revert IncorrectData();
             deposits_length = d_len/DEPOSIT_SIZE;
             if (deposits_length==0 || deposits_length > MAX_DEPOSITS_IN_BATCH) revert IncorrectData();
@@ -183,12 +183,13 @@ contract DelegatedDepositStorage {
             _fee += deposit_denominated_fee_at(d, i);
         }
 
-        bytes memory deposit_blob = new bytes(RECEIVER_AND_AMOUNT_SIZE*MAX_DEPOSITS_IN_BATCH+32);
+        bytes memory deposit_blob = new bytes(RECEIVER_AND_AMOUNT_SIZE*MAX_DEPOSITS_IN_BATCH+64);
 
         assembly {
-            mstore(add(deposit_blob, 32), prefix)
-            let deposit_blob_ptr := add(deposit_blob, 64)
-            let first_receiver_ptr := add(d.offset, RECEIVER_OFFSET)
+            mstore(add(deposit_blob, 32), prefix) //copy out commitment hash
+            calldatacopy(add(deposit_blob, 64), d.offset, 32) //copy account hash
+            let deposit_blob_ptr := add(deposit_blob, 96)
+            let first_receiver_ptr := add(add(d.offset, 32), RECEIVER_OFFSET)
             for {let i := 0} lt(i, deposits_length) {i := add(i, 1)} {
                 calldatacopy(add(deposit_blob_ptr, mul(i, RECEIVER_AND_AMOUNT_SIZE)), add(first_receiver_ptr, mul(i, DEPOSIT_SIZE)), RECEIVER_AND_AMOUNT_SIZE)
             }
