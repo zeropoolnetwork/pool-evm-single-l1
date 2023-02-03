@@ -49,7 +49,7 @@ contract DelegatedDepositStorage {
     uint256 internal constant UINT64_SHIFT = 192;
 
     uint256 public constant EXPIRATION_TIME = 1 days;
-    uint256 public constant MAX_DEPOSITS_IN_BATCH = 128;
+    uint256 public constant MAX_DEPOSITS_IN_BATCH = 16;
 
     address public immutable token;
     address public immutable pool;
