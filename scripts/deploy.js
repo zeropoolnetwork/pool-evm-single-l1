@@ -49,7 +49,7 @@ async function deploy() {
   let deploy_lazy_nonce = nonce+next_contracts_to_deploy_num;
 
   let deploy_lazy = async () => {
-    const delegatedDepositStorage = await DelegatedDepositStorage.deploy(tokenAddress, pool.address, {nonce: nonce++});
+    const delegatedDepositStorage = await DelegatedDepositStorage.deploy(tokenAddress, poolProxyAddress, {nonce: nonce++});
     console.log(`Delegated deposit storage deployed at ${delegatedDepositStorage.address}`);
     await delegatedDepositStorage.deployed();    
   };

@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import "./interfaces/IPoolDenominator.sol";
 
-
 contract DelegatedDepositStorage {
     using SafeERC20 for IERC20;
     using SafeCast for uint256;
@@ -21,9 +20,9 @@ contract DelegatedDepositStorage {
 
     error OnlyPool();
 
-    event DepositCreate(uint256 indexed id, address indexed owner, bytes10 receiver_d, bytes32 receiver_p, uint64 denominated_amount, uint64 denominated_fee, uint64 expired);
-    event DepositReleaseExpired(uint256 indexed id);
-    event DepositSpend(uint256 indexed id);
+    event DepositCreate(uint64 indexed id, address indexed owner, bytes10 receiver_d, bytes32 receiver_p, uint64 denominated_amount, uint64 denominated_fee, uint64 expired);
+    event DepositReleaseExpired(uint64 indexed id);
+    event DepositSpend(uint64 indexed id);
     
 
     // size 94 bytes
@@ -40,10 +39,11 @@ contract DelegatedDepositStorage {
     uint256 internal constant DEPOSIT_SIZE = 94;
     uint256 internal constant ID_OFFSET = 0;
     uint256 internal constant DENOMINATED_AMOUNT_OFFSET = 70;
-    uint256 internal constant DENOMINATED_FEE_OFFSET = 79;
+    uint256 internal constant DENOMINATED_FEE_OFFSET = 78;
     uint256 internal constant EXPIRED_OFFSET = 86;
     uint256 internal constant RECEIVER_OFFSET = 28;
     uint256 internal constant RECEIVER_AND_AMOUNT_SIZE = 38;
+    uint256 internal constant PREFIX_OFFSET = 36;
 
     uint256 internal constant UINT64_MASK = 0xffffffffffffffff000000000000000000000000000000000000000000000000;
     uint256 internal constant UINT64_SHIFT = 192;
@@ -128,7 +128,7 @@ contract DelegatedDepositStorage {
     function deposit_expired_at(bytes calldata d, uint256 index) internal pure returns (uint64) {
         uint256 _expired;
         assembly {
-            _expired := shr(UINT64_SHIFT, mload(add(d.offset, add(mul(DEPOSIT_SIZE, index), EXPIRED_OFFSET))))
+            _expired := shr(UINT64_SHIFT, calldataload(add(d.offset, add(mul(DEPOSIT_SIZE, index), add(EXPIRED_OFFSET, PREFIX_OFFSET)))))
         }
         return uint64(_expired);
     }
@@ -136,7 +136,7 @@ contract DelegatedDepositStorage {
     function deposit_id_at(bytes calldata d, uint256 index) internal pure returns (uint64) {
         uint256 _id;
         assembly {
-            _id := shr(UINT64_SHIFT, mload(add(d.offset, add(mul(DEPOSIT_SIZE, index), ID_OFFSET))))
+            _id := shr(UINT64_SHIFT, calldataload(add(d.offset, add(mul(DEPOSIT_SIZE, index), add(ID_OFFSET, PREFIX_OFFSET)))))
         }
         return uint64(_id);
     }
@@ -144,7 +144,7 @@ contract DelegatedDepositStorage {
     function deposit_denominated_amount_at(bytes calldata d, uint256 index) internal pure returns (uint64) {
         uint256 _denominated_amount;
         assembly {
-            _denominated_amount := shr(UINT64_SHIFT, mload(add(d.offset, add(mul(DEPOSIT_SIZE, index), DENOMINATED_AMOUNT_OFFSET))))
+            _denominated_amount := shr(UINT64_SHIFT, calldataload(add(d.offset, add(mul(DEPOSIT_SIZE, index), add(DENOMINATED_AMOUNT_OFFSET, PREFIX_OFFSET)))))
         }
         return uint64(_denominated_amount);
     }
@@ -152,13 +152,13 @@ contract DelegatedDepositStorage {
     function deposit_denominated_fee_at(bytes calldata d, uint256 index) internal pure returns (uint64) {
         uint256 _denominated_fee;
         assembly {
-            _denominated_fee := shr(UINT64_SHIFT, mload(add(d.offset, add(mul(DEPOSIT_SIZE, index), DENOMINATED_FEE_OFFSET))))
+            _denominated_fee := shr(UINT64_SHIFT, calldataload(add(d.offset, add(mul(DEPOSIT_SIZE, index), add(DENOMINATED_FEE_OFFSET, PREFIX_OFFSET)))))
         }
         return uint64(_denominated_fee);
     }
 
     function deposit_hash_at(bytes calldata d, uint256 index) internal pure returns(bytes32) {
-        return keccak256(d[index*DEPOSIT_SIZE:(index+1)*DEPOSIT_SIZE]);
+        return keccak256(d[index*DEPOSIT_SIZE+PREFIX_OFFSET:(index+1)*DEPOSIT_SIZE+PREFIX_OFFSET]);
     }
 
     function bn256reduce(uint256 x) internal pure returns (uint256) {
@@ -169,7 +169,7 @@ contract DelegatedDepositStorage {
         if (msg.sender != pool) revert OnlyPool();
         uint256 deposits_length;
         {
-            uint256 d_len = d.length-36;
+            uint256 d_len = d.length-PREFIX_OFFSET;
             if (d_len % DEPOSIT_SIZE != 0) revert IncorrectData();
             deposits_length = d_len/DEPOSIT_SIZE;
             if (deposits_length==0 || deposits_length > MAX_DEPOSITS_IN_BATCH) revert IncorrectData();
@@ -187,9 +187,9 @@ contract DelegatedDepositStorage {
 
         assembly {
             mstore(add(deposit_blob, 32), prefix) //copy out commitment hash
-            calldatacopy(add(deposit_blob, 64), d.offset, 36) //copy 0xffffffff and account hash
+            calldatacopy(add(deposit_blob, 64), d.offset, PREFIX_OFFSET) //copy 0xffffffff and account hash
             let deposit_blob_ptr := add(deposit_blob, 100)
-            let first_receiver_ptr := add(add(d.offset, 36), RECEIVER_OFFSET)
+            let first_receiver_ptr := add(add(d.offset, PREFIX_OFFSET), RECEIVER_OFFSET)
             for {let i := 0} lt(i, deposits_length) {i := add(i, 1)} {
                 calldatacopy(add(deposit_blob_ptr, mul(i, RECEIVER_AND_AMOUNT_SIZE)), add(first_receiver_ptr, mul(i, DEPOSIT_SIZE)), RECEIVER_AND_AMOUNT_SIZE)
             }
