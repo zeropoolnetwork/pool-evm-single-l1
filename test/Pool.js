@@ -3,7 +3,7 @@ const { ethers } = require("hardhat");
 const rand_bigint = require('random-bigint');
 const deploy = require("../scripts/deploy")
 
-const Q = 21888242871839275222246405745257275088696311157297823662689037894645226208583n;
+const R = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
 
 function rand_bigint_hex(n) {
     const x = rand_bigint(n*8);
@@ -12,7 +12,7 @@ function rand_bigint_hex(n) {
 }
 
 function rand_fr_hex() {
-    const x = rand_bigint(256) % Q;
+    const x = rand_bigint(256) % R;
     const data = x.toString(16);
     return "0".repeat(64 - data.length) + data;
 }
@@ -27,6 +27,8 @@ function rand_fr_hex_list(n) {
 
 process.env["MOCK_TX_VERIFIER"] = "true";
 process.env["MOCK_TREE_VERIFIER"] = "true";
+process.env["MOCK_DELEGATED_DEPOSIT_VERIFIER"] = "true";
+
 
 describe("Pool", async function() {
     it("Should perform transaction", async function () {
@@ -64,6 +66,38 @@ describe("Pool", async function() {
             data
         });
 
+
+    });
+
+    it("Should perform delegated deposit", async function () {
+        const [deployer,, relayer, user] = await ethers.getSigners();
+        const DepositCreate = new ethers.utils.Interface(["event DepositCreate(uint256 indexed id, address indexed owner, bytes10 receiver_d, bytes32 receiver_p, uint64 denominated_amount, uint64 denominated_fee, uint64 expired)"]);
+        
+
+        const { pool, Pool} = await deploy();
+        const provider = pool.provider;
+
+        const MintableToken = await ethers.getContractFactory("MintableToken");
+        const DelegatedDepositStorage = await ethers.getContractFactory("DelegatedDepositStorage");
+
+        
+        const token = MintableToken.attach(await pool.token());
+        const delegatedDepositStorage = DelegatedDepositStorage.attach(await pool.dds());
+
+        await token.connect(deployer).mint(user.address, ethers.utils.parseEther("1000"));
+        await token.connect(user).approve(delegatedDepositStorage.address, ethers.utils.parseEther("1000"));
+
+        const receiver_d = "0x"+rand_bigint_hex(10);
+        const receiver_p = "0x"+rand_fr_hex();
+        const amount = ethers.utils.parseEther("100");
+        const fee = ethers.utils.parseEther("0.1");
+
+        let tx = await delegatedDepositStorage.connect(user).deposit(receiver_d, receiver_p, amount, fee);
+        let receipt = await provider.getTransactionReceipt(tx.hash);
+        let id = DepositCreate.parseLog(receipt.logs[0]).args.id.toString();
+
+
+        
 
     });
 

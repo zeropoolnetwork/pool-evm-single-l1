@@ -25,7 +25,7 @@ const localDevnets = {
   hardhat: {
     accounts: {
       mnemonic: "crazy appear raise time fashion kind pattern crazy device split escape wolf",
-      count: 3,
+      count: 4,
     }
   },
   localhost: {
