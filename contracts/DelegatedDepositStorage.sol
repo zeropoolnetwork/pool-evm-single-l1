@@ -169,7 +169,7 @@ contract DelegatedDepositStorage {
         if (msg.sender != pool) revert OnlyPool();
         uint256 deposits_length;
         {
-            uint256 d_len = d.length-32;
+            uint256 d_len = d.length-36;
             if (d_len % DEPOSIT_SIZE != 0) revert IncorrectData();
             deposits_length = d_len/DEPOSIT_SIZE;
             if (deposits_length==0 || deposits_length > MAX_DEPOSITS_IN_BATCH) revert IncorrectData();
@@ -187,9 +187,9 @@ contract DelegatedDepositStorage {
 
         assembly {
             mstore(add(deposit_blob, 32), prefix) //copy out commitment hash
-            calldatacopy(add(deposit_blob, 64), d.offset, 32) //copy account hash
-            let deposit_blob_ptr := add(deposit_blob, 96)
-            let first_receiver_ptr := add(add(d.offset, 32), RECEIVER_OFFSET)
+            calldatacopy(add(deposit_blob, 64), d.offset, 36) //copy 0xffffffff and account hash
+            let deposit_blob_ptr := add(deposit_blob, 100)
+            let first_receiver_ptr := add(add(d.offset, 36), RECEIVER_OFFSET)
             for {let i := 0} lt(i, deposits_length) {i := add(i, 1)} {
                 calldatacopy(add(deposit_blob_ptr, mul(i, RECEIVER_AND_AMOUNT_SIZE)), add(first_receiver_ptr, mul(i, DEPOSIT_SIZE)), RECEIVER_AND_AMOUNT_SIZE)
             }
