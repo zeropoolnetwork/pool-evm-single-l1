@@ -42,7 +42,7 @@ contract DelegatedDepositStorage {
     uint256 internal constant DENOMINATED_FEE_OFFSET = 78;
     uint256 internal constant EXPIRED_OFFSET = 86;
     uint256 internal constant RECEIVER_OFFSET = 28;
-    uint256 internal constant RECEIVER_AND_AMOUNT_SIZE = 38;
+    uint256 internal constant RECEIVER_AND_AMOUNT_SIZE = 50;
     uint256 internal constant PREFIX_OFFSET = 36;
 
     uint256 internal constant UINT64_MASK = 0xffffffffffffffff000000000000000000000000000000000000000000000000;
