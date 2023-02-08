@@ -126,7 +126,7 @@ contract CustomABIDecoder {
         } else if (t==2) { 
             r = 36;
         } else if (t == 4) {
-            r = 264;
+            r = 0;
         } else revert(); 
     }
 
@@ -134,6 +134,26 @@ contract CustomABIDecoder {
         uint256 memo_fixed_size = _memo_fixed_size();
         uint256 offset = memo_data_pos+memo_fixed_size;
         uint256 length = _memo_data_size()-memo_fixed_size;
+        assembly {
+            r.offset := offset
+            r.length := length
+        }
+    }
+
+    uint256 constant memo_delegated_deposit_prefix_size = 4;
+
+    function _memo_delegated_deposit_prefix() pure internal returns(bytes4 r) {
+        uint256 memo_fixed_size = _memo_fixed_size();
+        uint256 offset = memo_data_pos+memo_fixed_size;
+        assembly {
+            r := calldataload(offset)
+        }
+    }
+
+    function _memo_delegated_deposit_data() pure internal returns(bytes calldata r) {
+        uint256 memo_fixed_size = _memo_fixed_size();
+        uint256 offset = memo_data_pos+memo_fixed_size+memo_delegated_deposit_prefix_size;
+        uint256 length = _memo_data_size()-memo_fixed_size-memo_delegated_deposit_prefix_size;
         assembly {
             r.offset := offset
             r.length := length
@@ -148,15 +168,6 @@ contract CustomABIDecoder {
         r = _loaduint256(memo_fee_pos+memo_fee_size-uint256_size) & memo_fee_mask;
     }
 
-    uint256 constant memo_delegated_deposit_pos = memo_fee_pos + memo_fee_size;
-    uint256 constant memo_delegated_deposit_size = 256;
-
-    function _memo_delegated_deposit_proof() pure internal returns (uint256[8] calldata r) {
-        uint256 pos = memo_delegated_deposit_pos;
-        assembly {
-            r := pos
-        }
-    }
 
     uint256 constant memo_native_amount_pos = memo_fee_pos + memo_fee_size;
     uint256 constant memo_native_amount_size = 8;

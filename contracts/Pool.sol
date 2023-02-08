@@ -84,7 +84,7 @@ contract Pool is Parameters, Initializable {
         return pool_id;
     }
 
-    function transact() external payable onlyOperator {
+    function _transact_legacy(uint256 tx_type) internal {
         {
             uint256 _pool_index = pool_index;
 
@@ -109,13 +109,13 @@ contract Pool is Parameters, Initializable {
         int256 token_amount = _transfer_token_amount() + int256(fee);
         int256 energy_amount = _transfer_energy_amount();
 
-        if (_tx_type()==0) { // Deposit
+        if (tx_type==0) { // Deposit
             require(token_amount>=0 && energy_amount==0 && msg.value == 0, "incorrect deposit amounts");
             token.safeTransferFrom(_deposit_spender(), address(this), uint256(token_amount) * denominator);
-        } else if (_tx_type()==1) { // Transfer 
+        } else if (tx_type==1) { // Transfer 
             require(token_amount==0 && energy_amount==0 && msg.value == 0, "incorrect transfer amounts");
 
-        } else if (_tx_type()==2) { // Withdraw
+        } else if (tx_type==2) { // Withdraw
             require(token_amount<=0 && energy_amount<=0 && msg.value == _memo_native_amount()*native_denominator, "incorrect withdraw amounts");
 
             if (token_amount<0) {
@@ -132,18 +132,43 @@ contract Pool is Parameters, Initializable {
                 require(success);
             }
 
-        } else if(_tx_type()==3) {
-            revert("Not implemented yet");
-        } else if(_tx_type()==4) {
-            (uint256 _token_amount, uint256 _fee, uint256 hashsum) = dds.spendMassDeposits(_transfer_out_commit(), _memo_message());
-            require(token_amount>=0 && energy_amount==0 && msg.value == 0, "incorrect deposit amounts");
-            require(_token_amount == uint256(token_amount) && _fee == fee, "inconsistent data");
-            require(delegated_deposit_verifier.verifyProof([hashsum], _memo_delegated_deposit_proof()), "bad delegated deposit proof");
         } else revert("Incorrect transaction type");
 
         if (fee>0) {
             token.safeTransfer(operatorManager.operator(), fee*denominator);
         }
+    } 
+
+    function _transact_delegated_deposit() internal {
+        if (_memo_delegated_deposit_prefix()!= 0xffffffff) revert("Incorrect delegated deposit prefix");
+        (, uint256 fee, uint256 hashsum) = dds.spendMassDeposits(_transfer_out_commit(), _memo_delegated_deposit_data());
+
+        {
+            uint256 _pool_index = pool_index;
+            require(delegated_deposit_verifier.verifyProof([hashsum], _transfer_proof()), "bad delegated deposit proof"); 
+            require(tree_verifier.verifyProof(_tree_pub(), _tree_proof()), "bad tree proof");
+            _pool_index +=OUTPUTS_TREE_LEAVES;
+            roots[_pool_index] = _tree_root_after();
+            pool_index = _pool_index;
+            bytes memory message = _memo_message();
+            bytes32 message_hash = keccak256(message);
+            bytes32 _all_messages_hash = keccak256(abi.encodePacked(all_messages_hash, message_hash));
+            all_messages_hash = _all_messages_hash;
+            emit Message(_pool_index, _all_messages_hash, message);
+        }
+        
+        if (fee>0) {
+            token.safeTransfer(operatorManager.operator(), fee*denominator);
+        }
+    }
+
+    function transact() external payable onlyOperator {
+        uint256 tx_type = _tx_type();
+        if (tx_type >= 0 && tx_type < 3) {
+            _transact_legacy(tx_type);
+        } else if (tx_type == 4) {
+            _transact_delegated_deposit();
+        } else revert("Incorrect transaction type");
     }
 }
 

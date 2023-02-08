@@ -15,6 +15,6 @@ interface IDelegatedDepositStorage {
     function deposit(bytes10 receiver_d, bytes32 receiver_p, uint256 amount, uint256 fee) external;
     function depositWithPermit(bytes10 receiver_d, bytes32 receiver_p, uint256 amount, uint256 fee, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external;
     function releaseExpired(Deposit memory _deposit) external;
-    function spendMassDeposits(uint256 prefix, bytes calldata d) external returns(uint256, uint256, uint256);
+    function spendMassDeposits(uint256 out_commitment_hash, bytes calldata d) external returns(uint256, uint256, uint256);
 
 }

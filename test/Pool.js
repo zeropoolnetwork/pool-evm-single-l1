@@ -114,12 +114,9 @@ describe("Pool", async function() {
             };
 
             let flatten = "0x"+deposit.id.substring(2) + 
-                deposit.owner.substring(2) + 
                 deposit.receiver_d.substring(2) + 
                 deposit.receiver_p.substring(2) + 
-                deposit.denominated_amount.substring(2) + 
-                deposit.denominated_fee.substring(2) + 
-                deposit.expired.substring(2);
+                deposit.denominated_amount.substring(2);
 
             deposit.flatten = flatten;
             return deposit;
@@ -134,7 +131,7 @@ describe("Pool", async function() {
 
         let fee = 0n;
         let transfer_token_amount = 0n;
-        let sample_memo_message = "ffffffff"+rand_fr_hex();
+        let sample_memo_message = "ffffffff";
 
         for (let i = 0; i < N_DEPOSITS; i++) {
             fee += BigInt(deposits[i].denominated_fee);
@@ -143,28 +140,27 @@ describe("Pool", async function() {
         }
 
         
-
+        
 
         const selector = Pool.interface.getSighash("transact");
-        const sample_nullifier =  rand_fr_hex();
+        const sample_nullifier =  "0000000000000000000000000000000000000000000000000000000000000000";
         const sample_out_commit = rand_fr_hex();
         const sample_transfer_index = "000000000000";
         const sample_enery_amount = "0000000000000000000000000000";
-        const sample_token_amount = bigint_to_n_byte_hex(transfer_token_amount, 8).substring(2);
+        const sample_token_amount = "0000000000000000";
         const sample_transact_proof = rand_fr_hex_list(8);
         const sample_root_after = rand_fr_hex();
         const sample_tree_proof = rand_fr_hex_list(8);
         const sample_tx_type = "0004"; // delegated deposit
-        const sample_memo_size = bigint_to_n_byte_hex(sample_memo_message.length/2+256+8, 2).substring(2); // memo block size
-        const sample_memo_fee = bigint_to_n_byte_hex(fee, 8).substring(2);
-        const sample_memo_delegated_deposit_proof = rand_fr_hex_list(8);
+        const sample_memo_size = bigint_to_n_byte_hex(sample_memo_message.length/2, 2).substring(2); // memo block size
+
 
 
         data = [
             selector, sample_nullifier, sample_out_commit, sample_transfer_index, sample_enery_amount, sample_token_amount, sample_transact_proof,
             sample_root_after, sample_tree_proof,
             sample_tx_type,
-            sample_memo_size, sample_memo_fee, sample_memo_delegated_deposit_proof, sample_memo_message
+            sample_memo_size, sample_memo_message
         ].join("");
 
         console.log(pool.address, await delegatedDepositStorage.pool());
