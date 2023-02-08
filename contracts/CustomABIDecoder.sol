@@ -54,6 +54,13 @@ contract CustomABIDecoder {
         }
     }
 
+    function _delegated_deposit_proof() pure internal returns (uint256[8] calldata r) {
+        uint256 pos = transfer_proof_pos;
+        assembly {
+            r := pos
+        }
+    }
+
     uint256 constant tree_root_after_pos = transfer_proof_pos + transfer_proof_size;
     uint256 constant tree_root_after_size = 32;
 

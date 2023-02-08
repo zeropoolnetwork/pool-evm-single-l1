@@ -141,11 +141,17 @@ contract Pool is Parameters, Initializable {
 
     function _transact_delegated_deposit() internal {
         if (_memo_delegated_deposit_prefix()!= 0xffffffff) revert("Incorrect delegated deposit prefix");
+        if (_transfer_nullifier() != 0 ||
+            _transfer_index() != 0 ||
+            _transfer_token_amount() != 0 ||
+            _transfer_energy_amount() != 0
+        ) revert("Incorrect delegated deposit data");
+
         (, uint256 fee, uint256 hashsum) = dds.spendMassDeposits(_transfer_out_commit(), _memo_delegated_deposit_data());
 
         {
             uint256 _pool_index = pool_index;
-            require(delegated_deposit_verifier.verifyProof([hashsum], _transfer_proof()), "bad delegated deposit proof"); 
+            require(delegated_deposit_verifier.verifyProof([hashsum], _delegated_deposit_proof()), "bad delegated deposit proof"); 
             require(tree_verifier.verifyProof(_tree_pub(), _tree_proof()), "bad tree proof");
             _pool_index +=OUTPUTS_TREE_LEAVES;
             roots[_pool_index] = _tree_root_after();

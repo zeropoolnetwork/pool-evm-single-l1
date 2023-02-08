@@ -71,7 +71,7 @@ contract DelegatedDepositStorage {
     //     return keccak256(abi.encodePacked(d.id, d.owner, d.receiver_d, d.receiver_p, d.denominated_amount, d.denominated_fee, d.expired));
     // }
 
-    function _depositCreate(address owner, bytes10 receiver_d, bytes32 receiver_p, uint256 amount, uint256 fee) internal {
+    function _depositCreate(address owner, bytes10 receiver_d, bytes32 receiver_p, uint256 amount, uint256 fee) internal returns(uint64) {
         if (amount < uint256(denominator)) revert DepositEmpty();
         uint64 _depositCount = depositCount;
         uint64 denominated_amount = (amount/denominator).toUint64();
@@ -80,6 +80,7 @@ contract DelegatedDepositStorage {
         deposits[_depositCount] = Deposit(owner, receiver_d, receiver_p, denominated_amount, denominated_fee, _expired);
         depositCount=_depositCount+1;
         emit DepositCreate(_depositCount, owner, receiver_d, receiver_p, denominated_amount, denominated_fee, _expired);
+        return _depositCount;
     }
 
     function _depositReleaseExpired(uint64 id) internal returns(uint64) {
@@ -112,13 +113,13 @@ contract DelegatedDepositStorage {
     }
 
 
-    function deposit(bytes10 receiver_d, bytes32 receiver_p, uint256 amount, uint256 fee) external {
-        _depositCreate(msg.sender, receiver_d, receiver_p, amount, fee);
+    function deposit(bytes10 receiver_d, bytes32 receiver_p, uint256 amount, uint256 fee) external returns(uint64 id){
+        id = _depositCreate(msg.sender, receiver_d, receiver_p, amount, fee);
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount+fee);
     }
 
-    function depositWithPermit(bytes10 receiver_d, bytes32 receiver_p, uint256 amount, uint256 fee, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external {
-        _depositCreate(msg.sender, receiver_d, receiver_p, amount, fee);
+    function depositWithPermit(bytes10 receiver_d, bytes32 receiver_p, uint256 amount, uint256 fee, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external returns(uint64 id){
+        id = _depositCreate(msg.sender, receiver_d, receiver_p, amount, fee);
         IERC20Permit(token).permit(msg.sender, address(this), amount+fee, deadline, v, r, s);
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
     }
