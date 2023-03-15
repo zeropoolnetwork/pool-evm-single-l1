@@ -1,5 +1,11 @@
 {
   "name": "pool-evm-single-l1",
+  "scripts": {
+    "build": "hardhat compile",
+    "start:local": "hardhat node",
+    "deploy:local": "hardhat --network localhost run scripts/deploy-task.js",
+    "test:local": "hardhat test"
+  },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
