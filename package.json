@@ -3,7 +3,7 @@
   "scripts": {
     "build": "hardhat compile",
     "start:local": "hardhat node",
-    "deploy:local": "hardhat --network localhost run scripts/deploy-task.js",
+    "deploy:local": "hardhat --network hardhat run scripts/deploy-task.js",
     "test:local": "hardhat test"
   },
   "devDependencies": {

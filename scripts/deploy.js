@@ -96,11 +96,33 @@ async function deploy() {
   const data = JSON.stringify({ proxy: zeroPoolProxy.address, pool: pool.address, token: tokenAddress, voucher: voucherTokenAddress });
   fs.writeFileSync('addresses.json', data);
 
+  const numAccounts = parseInt(process.env.NUM_ACCOUNTS || '1000');
+  await initAccounts(tokenAddress, poolProxyAddress, 'test test test test test test test test test test test junk', numAccounts);
 
   return {
     pool:poolProxified,
     Pool
   };
+}
+
+async function initAccounts(tokenAddress, poolAddress, accountsMnemonic, numAccounts) {
+  const wallets = [];
+  const parentPath = "m/44'/60'/0'/0";
+  for (let i = 0; i < numAccounts; i++) {
+    const path = parentPath + `/${i}`;
+    const wallet = ethers.Wallet.fromMnemonic(accountsMnemonic, path).connect(ethers.provider);
+    wallets.push(wallet);
+  }
+  const tokenContract = new ethers.Contract(tokenAddress, ["function mint(address, uint256)", "function approve(address, uint256)"]);
+
+  // Mint and approve for each wallet
+  await Promise.all(wallets.map(async (wallet) => {
+    const token = tokenContract.connect(wallet);
+    const mint = await token.mint(wallet.address, ethers.utils.parseEther("1000"));
+    const approve = await token.approve(poolAddress, ethers.constants.MaxUint256);
+    await Promise.all([mint.wait(), approve.wait()]);
+    console.log('Minted and approved for', wallet.address);
+  }));
 }
 
 module.exports = deploy;
